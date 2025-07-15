@@ -40,7 +40,6 @@ const PostItem = ({ post }: { post: Post }) => {
             <p className="font-semibold">{post.authorName}</p>
             <p className="text-xs text-muted-foreground">{formattedDate}</p>
           </div>
-          <p className="text-sm text-muted-foreground">Author ID: {post.authorId}</p>
         </div>
       </CardHeader>
       <CardContent>
