@@ -15,7 +15,18 @@ import { useAuth } from '@/hooks/use-auth';
 
 const BottomNavBar = () => {
   const pathname = usePathname();
-  const { userData } = useAuth();
+  const { userData, loading } = useAuth();
+
+  // Don't render until we know the user's role to prevent hydration mismatch
+  if (loading) {
+    return (
+        <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
+            <div className="grid h-full max-w-lg mx-auto grid-cols-4">
+                {/* You can add skeleton loaders here if you want */}
+            </div>
+        </div>
+    );
+  }
 
   const allMenuItems = [
     { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
