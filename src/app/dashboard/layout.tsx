@@ -27,7 +27,10 @@ const BottomNavBar = () => {
 
   return (
     <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
-      <div className={`grid h-full max-w-lg grid-cols-${userData?.role === 'admin' ? '5' : '4'} mx-auto font-medium`}>
+      <div 
+        className="grid h-full max-w-lg mx-auto font-medium"
+        style={{ gridTemplateColumns: `repeat(${allMenuItems.length}, minmax(0, 1fr))` }}
+      >
         {allMenuItems.map(item => (
            <Link key={item.href} href={item.href} className={`inline-flex flex-col items-center justify-center px-5 hover:bg-muted group ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`}>
             {item.icon}
