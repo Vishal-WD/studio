@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,9 +11,11 @@ import { ImageFocusDialog } from './image-focus-dialog';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export function LatestPostsFeed() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const { userData, loading: authLoading } = useAuth();
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
 
@@ -21,12 +23,12 @@ export function LatestPostsFeed() {
     const q = query(
         collection(db, 'posts'), 
         orderBy('createdAt', 'desc'),
-        limit(5)
+        limit(20) // Fetch more posts to ensure we have enough to filter
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setPosts(postsData);
+      setAllPosts(postsData);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching latest posts:", error);
@@ -39,6 +41,21 @@ export function LatestPostsFeed() {
   const handleImageClick = (imageUrl: string) => {
     setFocusedImage(imageUrl);
   };
+  
+  const filteredPosts = useMemo(() => {
+    if (authLoading || !userData) return [];
+
+    let postsToShow: Post[] = [];
+    
+    if (userData.role === 'admin' || userData.designation === 'dean') {
+        postsToShow = allPosts;
+    } else if (userData.department) {
+        postsToShow = allPosts.filter(post => post.authorDepartment === userData.department);
+    }
+    
+    return postsToShow.slice(0, 5); // Return the latest 5 relevant posts
+
+  }, [allPosts, userData, authLoading]);
 
   return (
     <>
@@ -51,18 +68,18 @@ export function LatestPostsFeed() {
             </Link>
             </Button>
         </div>
-        {loading ? (
+        {loading || authLoading ? (
             <div className="space-y-4">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
             </div>
-        ) : posts.length > 0 ? (
+        ) : filteredPosts.length > 0 ? (
           <div className="space-y-4">
-            {posts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)}
+            {filteredPosts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)}
           </div>
         ) : (
           <Card>
             <CardContent className="py-12">
-              <p className="text-center text-muted-foreground">No recent posts found.</p>
+              <p className="text-center text-muted-foreground">No recent posts found for you.</p>
             </CardContent>
           </Card>
         )}
