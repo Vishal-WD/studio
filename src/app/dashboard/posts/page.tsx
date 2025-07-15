@@ -43,13 +43,13 @@ export default function PostsPage() {
   const filteredPosts = useMemo(() => {
     if (authLoading || !userData) return [];
     
-    if (userData.role === 'admin' || userData.designation === 'dean') return allPosts;
-
-    if(userData.role === 'student' || (userData.role === 'faculty' && userData.designation !== 'hod')) {
-        return allPosts.filter(post => post.authorDepartment === userData.department);
+    // Only deans can see all posts
+    if (userData.designation === 'dean') {
+      return allPosts;
     }
-    
-    if (userData.designation === 'hod') {
+
+    // Everyone else (admins, faculty, students) sees posts from their own department
+    if (userData.department) {
         return allPosts.filter(post => post.authorDepartment === userData.department);
     }
 

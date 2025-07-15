@@ -47,10 +47,12 @@ export function LatestPostsFeed() {
 
     let postsToShow: Post[] = [];
     
-    if (userData.role === 'admin' || userData.designation === 'dean') {
-        postsToShow = allPosts;
+    // Only deans can see all posts
+    if (userData.designation === 'dean') {
+      postsToShow = allPosts;
     } else if (userData.department) {
-        postsToShow = allPosts.filter(post => post.authorDepartment === userData.department);
+      // Everyone else (admins, faculty, students) sees posts from their own department
+      postsToShow = allPosts.filter(post => post.authorDepartment === userData.department);
     }
     
     return postsToShow.slice(0, 5); // Return the latest 5 relevant posts

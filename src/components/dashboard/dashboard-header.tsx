@@ -88,7 +88,9 @@ export function DashboardHeader() {
             return true; // Everyone sees event notifications
         }
         if (notification.type === 'post') {
-            if (userData.role === 'admin' || userData.designation === 'dean') return true;
+            // Only deans see all post notifications
+            if (userData.designation === 'dean') return true;
+            // Others (including admins) see department-specific posts
             if (userData.department) {
                 return notification.authorDepartment === userData.department;
             }
