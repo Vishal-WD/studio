@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 
 interface Post {
   id: string;
@@ -18,6 +19,8 @@ interface Post {
   authorDepartment?: string;
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
+  imageUrl?: string;
+  imagePath?: string;
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -42,6 +45,17 @@ const PostItem = ({ post }: { post: Post }) => {
 
   return (
     <Card className="shadow-sm overflow-hidden">
+        {post.imageUrl && (
+            <div className="w-full h-64 relative bg-muted">
+                <Image
+                    src={post.imageUrl}
+                    alt="Post image"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+            </div>
+        )}
       <CardHeader className="flex flex-row items-start gap-4 space-y-0">
         <Avatar>
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
@@ -89,17 +103,23 @@ export default function PostsPage() {
   }, []);
 
   const filteredPosts = useMemo(() => {
-    if (!userData?.department && userData?.designation !== 'dean') return [];
+    if (authLoading || !userData) return [];
     
-    return allPosts.filter(post => {
-      // Deans see all posts
-      if (userData?.designation === 'dean') return true;
-      // HODs see posts from their own department
-      if (post.authorDepartment === userData?.department) return true;
+    // Deans and Admins see all posts
+    if (userData.role === 'admin' || userData.designation === 'dean') return allPosts;
 
-      return false;
-    });
-  }, [allPosts, userData]);
+    // Students and faculty (who are not HODs) see posts from their own department.
+    if(userData.role === 'student' || (userData.role === 'faculty' && userData.designation !== 'hod')) {
+        return allPosts.filter(post => post.authorDepartment === userData.department);
+    }
+    
+    // HODs see posts from their own department
+    if (userData.designation === 'hod') {
+        return allPosts.filter(post => post.authorDepartment === userData.department);
+    }
+
+    return [];
+  }, [allPosts, userData, authLoading]);
 
   const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
 

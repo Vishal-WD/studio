@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, deleteObject } from 'firebase/storage';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { DeletePostDialog } from '@/components/dashboard/delete-post-dialog';
 import { useToast } from '@/hooks/use-toast';
-
+import Image from 'next/image';
 
 interface Post {
   id: string;
@@ -22,6 +23,8 @@ interface Post {
   authorDepartment?: string;
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
+  imageUrl?: string;
+  imagePath?: string;
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -46,6 +49,17 @@ const PostItem = ({ post, onDelete }: { post: Post, onDelete: (post: Post) => vo
 
   return (
     <Card className="shadow-sm overflow-hidden">
+        {post.imageUrl && (
+            <div className="w-full h-64 relative bg-muted">
+                <Image
+                    src={post.imageUrl}
+                    alt="Post image"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+            </div>
+        )}
       <CardHeader className="flex flex-row items-start gap-4 space-y-0">
         <Avatar>
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
@@ -110,6 +124,13 @@ export default function ActivityPage() {
   const handleDeleteConfirm = async () => {
     if (!selectedPost) return;
     try {
+        // 1. Delete image from storage if it exists
+        if (selectedPost.imagePath) {
+            const imageRef = ref(storage, selectedPost.imagePath);
+            await deleteObject(imageRef);
+        }
+
+        // 2. Delete post document from Firestore
         await deleteDoc(doc(db, 'posts', selectedPost.id));
         
         toast({ title: "Success", description: "Post deleted successfully." });
