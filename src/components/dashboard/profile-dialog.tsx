@@ -22,6 +22,11 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
       .join('')
       .toUpperCase();
   };
+  
+  const formatDesignation = (designation?: string) => {
+    if (!designation) return '';
+    return designation.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
 
   const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string }) => {
     if (!value) return null;
@@ -30,7 +35,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
         <div className="text-muted-foreground">{icon}</div>
         <div>
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="font-medium">{value}</p>
+          <p className="font-medium capitalize">{value}</p>
         </div>
       </div>
     );
@@ -68,6 +73,9 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
             <div className="space-y-6 border-t pt-6">
                 <DetailItem icon={<UserCircle2 size={20} />} label="Role" value={userData.role} />
                 <DetailItem icon={<Building size={20} />} label="Department" value={userData.department} />
+                 {userData.designation && (
+                  <DetailItem icon={<BadgeCheck size={20} />} label="Designation" value={formatDesignation(userData.designation)} />
+                )}
                 {userData.role === 'student' && (
                   <DetailItem icon={<Hash size={20} />} label="Registration No." value={userData.regno} />
                 )}
