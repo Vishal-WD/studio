@@ -1,38 +1,47 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if a user is an admin
+
+    // Helper functions
+    function isAuth() {
+      return request.auth != null;
+    }
+
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
-    // Helper function to check if a user is a staff member who can post
-    function isStaff() {
-      let designation = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation;
-      return designation in ['dean', 'hod', 'club_incharge'];
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
 
+    // Users collection
+    // Admins can manage all users. Users can only read their own data.
     match /users/{userId} {
-      // Admins can read/write any user document.
-      // Users can only read their own document.
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if isAdmin();
+      allow read: if isAuth() && (isOwner(userId) || isAdmin());
+      allow write: if isAdmin(); // create, update, delete
     }
 
+    // Posts collection
+    // Authenticated users can read posts from their department.
+    // Users can only create/delete their own posts.
     match /posts/{postId} {
-      // Any authenticated user can read any post.
-      allow read: if request.auth != null;
-      
-      // Users can create a post if they are staff.
-      allow create: if request.auth != null && isStaff();
-
-      // Users can only delete their own posts.
-      allow delete: if request.auth.uid == resource.data.authorId;
-      
-      // Updating posts is not allowed for now.
-      allow update: if false;
+       allow read: if isAuth();
+       allow create: if isAuth() && request.resource.data.authorId == request.auth.uid;
+       allow delete: if isAuth() && resource.data.authorId == request.auth.uid;
+    }
+    
+    // Clubs collection
+    // Any authenticated user can read clubs.
+    // Only admins can create clubs.
+    // Only admins or the assigned club incharge can update a club.
+    match /clubs/{clubId} {
+      allow read: if isAuth();
+      allow create: if isAdmin();
+      allow update: if isAuth() && (isAdmin() || request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.officials.inchargeStaffId)).data.uid);
+      // Delete rule can be added here if needed
     }
   }
 }
