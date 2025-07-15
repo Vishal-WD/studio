@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AiAssistantSheet } from "./ai-assistant-sheet";
 import Link from "next/link";
 
 export function DashboardHeader() {
@@ -32,8 +31,6 @@ export function DashboardHeader() {
       </div>
       
       <div className="flex items-center gap-2">
-        <AiAssistantSheet />
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">

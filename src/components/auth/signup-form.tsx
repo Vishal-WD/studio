@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const formSchema = z.object({
   username: z.string().min(2, { message: "Username must be at least 2 characters." }),
@@ -49,6 +52,7 @@ const formSchema = z.object({
 
 export function SignUpForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -65,13 +69,21 @@ export function SignUpForm() {
 
   const role = form.watch("role");
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Account created successfully!",
-      description: "Please check your email to verify your account.",
-    });
-     // In a real app, you might redirect to a verification pending page or login.
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "Account created successfully!",
+        description: "You can now log in.",
+      });
+      router.push('/login');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: error.message,
+      });
+    }
   }
 
   return (
@@ -172,7 +184,7 @@ export function SignUpForm() {
                   <FormItem>
                     <FormLabel>Staff ID</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your Staff ID" {...field} />
+                      <Input placeholder="Enter your Staff ID" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -188,7 +200,7 @@ export function SignUpForm() {
                   <FormItem>
                     <FormLabel>Registration Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your Registration No." {...field} />
+                      <Input placeholder="Enter your Registration No." {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -233,8 +245,8 @@ export function SignUpForm() {
               )}
             />
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-              Sign Up
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Signing up...' : 'Sign Up'}
             </Button>
           </form>
         </Form>
