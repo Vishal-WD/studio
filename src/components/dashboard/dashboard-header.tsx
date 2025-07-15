@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileDialog } from "./profile-dialog";
 import { Logo } from '../logo';
-import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, where, serverTimestamp, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import type { Post } from '@/components/dashboard/post-item';
 import type { Event } from '@/components/dashboard/event-item';
 import Link from "next/link";
@@ -37,21 +37,33 @@ export function DashboardHeader() {
   const [loadingNotifications, setLoadingNotifications] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userData) {
+        setLoadingNotifications(false);
+        return;
+    };
 
     setLoadingNotifications(true);
 
-    const postsQuery = query(
+    const notificationsLastClearedAt = userData.notificationsLastClearedAt as Timestamp | undefined;
+
+    const basePostsQuery = query(
         collection(db, 'posts'), 
         orderBy('createdAt', 'desc'),
-        limit(5)
+        limit(10)
     );
+    const postsQuery = notificationsLastClearedAt 
+        ? query(basePostsQuery, where('createdAt', '>', notificationsLastClearedAt))
+        : basePostsQuery;
 
-    const eventsQuery = query(
+    const baseEventsQuery = query(
         collection(db, 'events'), 
         orderBy('createdAt', 'desc'),
-        limit(5)
+        limit(10)
     );
+     const eventsQuery = notificationsLastClearedAt 
+        ? query(baseEventsQuery, where('createdAt', '>', notificationsLastClearedAt))
+        : baseEventsQuery;
+
 
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
         const postsData = snapshot.docs.map(doc => ({ id: doc.id, type: 'post', ...doc.data() } as Notification));
@@ -60,6 +72,9 @@ export function DashboardHeader() {
             const all = [...otherNotifications, ...postsData].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
             return all;
         });
+        setLoadingNotifications(false);
+    }, (error) => {
+        console.error("Error fetching post notifications:", error);
         setLoadingNotifications(false);
     });
 
@@ -71,6 +86,9 @@ export function DashboardHeader() {
             return all;
         });
         setLoadingNotifications(false);
+    }, (error) => {
+        console.error("Error fetching event notifications:", error);
+        setLoadingNotifications(false);
     });
 
     return () => {
@@ -78,7 +96,7 @@ export function DashboardHeader() {
         unsubscribeEvents();
     };
 
-  }, [user]);
+  }, [user, userData]);
 
   const filteredNotifications = useMemo(() => {
     if (authLoading || !userData) return [];
@@ -88,15 +106,13 @@ export function DashboardHeader() {
             return true; // Everyone sees event notifications
         }
         if (notification.type === 'post') {
-            // Only deans see all post notifications
             if (userData.designation === 'dean') return true;
-            // Others (including admins) see department-specific posts
             if (userData.department) {
                 return notification.authorDepartment === userData.department;
             }
         }
         return false;
-    }).slice(0, 5); // Limit to 5 final notifications
+    }).slice(0, 5);
 
   }, [notifications, userData, authLoading]);
 
@@ -116,12 +132,25 @@ export function DashboardHeader() {
     }
   };
   
-  const handleClearNotifications = () => {
-    setNotifications([]);
-    toast({
-      title: "Notifications Cleared",
-      description: "Your notification feed is now empty.",
-    });
+  const handleClearNotifications = async () => {
+    if (!user) return;
+    const userDocRef = doc(db, 'users', user.uid);
+    try {
+        await updateDoc(userDocRef, {
+            notificationsLastClearedAt: serverTimestamp()
+        });
+        toast({
+            title: "Notifications Cleared",
+            description: "Your notification feed is now empty.",
+        });
+    } catch (error) {
+        console.error("Error clearing notifications:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not clear notifications. Please try again.",
+        });
+    }
   };
 
 
