@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 
 interface Post {
   id: string;
@@ -18,6 +19,7 @@ interface Post {
   authorDepartment?: string;
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
+  imageUrl?: string;
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -41,7 +43,12 @@ const PostItem = ({ post }: { post: Post }) => {
   }
 
   return (
-    <Card className="shadow-sm">
+    <Card className="shadow-sm overflow-hidden">
+      {post.imageUrl && (
+        <div className="w-full h-64 relative bg-muted">
+            <Image src={post.imageUrl} alt="Post image" layout="fill" className="object-cover" />
+        </div>
+      )}
       <CardHeader className="flex flex-row items-start gap-4 space-y-0">
         <Avatar>
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
@@ -90,7 +97,11 @@ export default function PostsPage() {
 
   const filteredPosts = useMemo(() => {
     if (!userData?.department) return [];
-    return allPosts.filter(post => post.authorDepartment === userData.department);
+    // A post is visible if it's for the user's department OR if it's from an admin (who might not have a department).
+    // The rules are now simplified, so we handle more logic here.
+    return allPosts.filter(post => 
+      post.authorDepartment === userData.department || post.authorDesignation === 'dean'
+    );
   }, [allPosts, userData?.department]);
 
   const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod' || userData?.designation === 'club_incharge';
@@ -112,9 +123,9 @@ export default function PostsPage() {
       <div className="space-y-4">
         {loadingPosts || authLoading ? (
           <>
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
           </>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map(post => <PostItem key={post.id} post={post} />)
