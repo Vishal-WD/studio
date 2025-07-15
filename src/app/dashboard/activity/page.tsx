@@ -55,13 +55,15 @@ export default function ActivityPage() {
 
   useEffect(() => {
     if (user) {
+      // Query without ordering to avoid needing a composite index
       const q = query(
         collection(db, 'posts'), 
-        where('authorId', '==', user.uid),
-        orderBy('createdAt', 'desc')
+        where('authorId', '==', user.uid)
       );
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        // Sort posts on the client-side
+        postsData.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
         setPosts(postsData);
         setLoadingPosts(false);
       }, (error) => {
