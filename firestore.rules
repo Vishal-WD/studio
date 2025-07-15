@@ -3,34 +3,33 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    // Helper functions
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
     }
     
+    // Helper function to check if the user is a staff member allowed to post
     function isStaff() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod', 'club_incharge'];
+      // Accessing user data from the 'users' collection
+      let userData = getUserData(request.auth.uid);
+      return userData.designation in ['dean', 'hod', 'club_incharge'];
     }
 
-    // Rules for 'users' collection
     match /users/{userId} {
       // Admins can read/write any user document
-      allow read, write: if isAdmin();
-      // Any authenticated user can read their own document
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if getUserData(request.auth.uid).role == 'admin';
+      // Users can only read their own document
+      allow read: if request.auth.uid == userId;
     }
-    
-    // Rules for 'posts' collection
+
     match /posts/{postId} {
-       // Allow read access to all authenticated users.
-       // The logic to filter posts by department is handled client-side.
+      // Any authenticated user can read posts
       allow read: if request.auth != null;
-
-      // Allow create access only to staff members (dean, hod, club_incharge).
-      // The incoming post must have an authorDepartment.
-      allow create: if isStaff() && (request.resource.data.authorDepartment is string);
-
-      // Allow a user to delete their own post.
+      
+      // Only authorized staff can create posts, and they must be the author.
+      // This rule was simplified to fix the "endless posting" issue.
+      allow create: if isStaff() && request.resource.data.authorId == request.auth.uid;
+        
+      // A user can only delete their own posts
       allow delete: if request.auth.uid == resource.data.authorId;
     }
   }
