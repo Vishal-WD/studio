@@ -1,0 +1,30 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Admins can create, update, and delete any user document.
+      // Any authenticated user can read their own document.
+      allow read, write: if isAdmin();
+      allow read: if request.auth.uid == userId;
+    }
+
+    // Rules for the 'posts' collection
+    match /posts/{postId} {
+      // Any authenticated user can read any post.
+      allow read: if request.auth.uid != null;
+      
+      // An authenticated user can create a post if the authorId matches their own UID.
+      // An authenticated user can update or delete their own post.
+      allow create, update, delete: if request.auth.uid != null && request.resource.data.authorId == request.auth.uid;
+    }
+  }
+}
