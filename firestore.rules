@@ -4,44 +4,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isAuth() {
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
       return request.auth != null;
     }
 
+    // Helper function to check if a user is an admin
     function isAdmin() {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Users collection
-    // Admins can manage all users. Users can only read their own data.
+    // USERS collection
     match /users/{userId} {
-      allow read: if isAuth() && (isOwner(userId) || isAdmin());
-      allow write: if isAdmin(); // create, update, delete
-    }
-
-    // Posts collection
-    // Authenticated users can read posts from their department.
-    // Users can only create/delete their own posts.
-    match /posts/{postId} {
-       allow read: if isAuth();
-       allow create: if isAuth() && request.resource.data.authorId == request.auth.uid;
-       allow delete: if isAuth() && resource.data.authorId == request.auth.uid;
+      // Admins can read/write any user document
+      // Users can only read/write their own document
+      allow read, write: if isAuthenticated() && (isAdmin() || request.auth.uid == userId);
     }
     
-    // Clubs collection
-    // Any authenticated user can read clubs.
-    // Only admins can create clubs.
-    // Only admins or the assigned club incharge can update a club.
+    // CLUBS collection
     match /clubs/{clubId} {
-      allow read: if isAuth();
-      allow create: if isAdmin();
-      allow update: if isAuth() && (isAdmin() || request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.officials.inchargeStaffId)).data.uid);
-      // Delete rule can be added here if needed
+      // Any authenticated user can read clubs
+      allow read: if isAuthenticated();
+      // Any authenticated user can create a club
+      allow create: if isAuthenticated();
+      // Only admins or the assigned club incharge can update a club
+      allow update: if isAuthenticated() && (isAdmin() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.staffId == resource.data.officials.inchargeStaffId);
+    }
+
+    // POSTS collection
+    match /posts/{postId} {
+      // A user can read a post if they are in the same department
+      allow read: if isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.authorDepartment;
+      // Allow users to create posts if they are authenticated
+      allow create: if isAuthenticated();
+      // Allow users to delete a post only if they are the author
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.authorId;
     }
   }
 }
