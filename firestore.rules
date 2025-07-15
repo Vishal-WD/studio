@@ -2,26 +2,37 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Users can read their own data, and admins can read anyone's data.
-    match /users/{userId} {
-      allow read: if request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow write, update, create: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Helper function to check if a user is a staff member who can post
+    function isStaff() {
+      let designation = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation;
+      return designation in ['dean', 'hod', 'club_incharge'];
     }
 
-    // Posts
+    match /users/{userId} {
+      // Admins can read/write any user document.
+      // Users can only read their own document.
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if isAdmin();
+    }
+
     match /posts/{postId} {
-      // Allow create if user is authenticated
-      allow create: if request.auth != null;
+      // Any authenticated user can read any post.
+      allow read: if request.auth != null;
+      
+      // Users can create a post if they are staff.
+      allow create: if request.auth != null && isStaff();
 
-      // Allow delete if the user is the author of the post
+      // Users can only delete their own posts.
       allow delete: if request.auth.uid == resource.data.authorId;
-
-      // Allow users to read/list posts from their own department.
-      // This covers both getting a single document and querying a list of documents.
-      // Note: This requires a composite index on (authorDepartment, createdAt).
-      // You can create it here: https://console.firebase.google.com/v1/r/project/campus-790a5/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9jYW1wdXMtNzkwYTUvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL3Bvc3RzL2luZGV4ZXMvXxAaChBhdXRob3JEZXBhcnRtZW50EAEaDQoJY3JlYXRlZEF0EAIaDAoIX19uYW1lX18QAg
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.authorDepartment;
+      
+      // Updating posts is not allowed for now.
+      allow update: if false;
     }
   }
 }

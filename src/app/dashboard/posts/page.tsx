@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
@@ -47,7 +47,7 @@ const PostItem = ({ post }: { post: Post }) => {
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-start justify-between">
             <div>
               <p className="font-semibold">{post.authorName}</p>
               {getDesignationDisplay()}
@@ -66,33 +66,32 @@ const PostItem = ({ post }: { post: Post }) => {
 
 export default function PostsPage() {
   const { userData, loading: authLoading } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
   useEffect(() => {
-    if (userData?.department) {
-      const q = query(
-        collection(db, 'posts'), 
-        where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-        setPosts(postsData);
-        setLoadingPosts(false);
-      }, (error) => {
-        console.error("Error fetching posts:", error);
-        // This likely means the required index is not created.
-        setLoadingPosts(false);
-      });
-
-      return () => unsubscribe();
-    } else if (!authLoading) {
-      // If we're not loading auth and there's no department, there are no posts to fetch
+    // Fetch all posts, we will filter by department on the client side
+    const q = query(
+      collection(db, 'posts'), 
+      orderBy('createdAt', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      setAllPosts(postsData);
       setLoadingPosts(false);
-    }
-  }, [userData, authLoading]);
+    }, (error) => {
+      console.error("Error fetching posts:", error);
+      setLoadingPosts(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const filteredPosts = useMemo(() => {
+    if (!userData?.department) return [];
+    return allPosts.filter(post => post.authorDepartment === userData.department);
+  }, [allPosts, userData?.department]);
 
   const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod' || userData?.designation === 'club_incharge';
 
@@ -117,8 +116,8 @@ export default function PostsPage() {
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
           </>
-        ) : posts.length > 0 ? (
-          posts.map(post => <PostItem key={post.id} post={post} />)
+        ) : filteredPosts.length > 0 ? (
+          filteredPosts.map(post => <PostItem key={post.id} post={post} />)
         ) : (
           <Card>
             <CardContent className="py-12">
