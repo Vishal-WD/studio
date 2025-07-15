@@ -3,8 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
-import { ref, deleteObject } from 'firebase/storage';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,6 +14,7 @@ import { Trash2 } from 'lucide-react';
 import { DeletePostDialog } from '@/components/dashboard/delete-post-dialog';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
 
 interface Post {
   id: string;
@@ -30,7 +30,7 @@ interface Post {
   };
 }
 
-const PostItem = ({ post, onDelete }: { post: Post, onDelete: (post: Post) => void }) => {
+const PostItem = ({ post, onDelete, onImageClick }: { post: Post, onDelete: (post: Post) => void, onImageClick: (imageUrl: string) => void }) => {
   const getInitials = (name = '') => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
   };
@@ -49,7 +49,7 @@ const PostItem = ({ post, onDelete }: { post: Post, onDelete: (post: Post) => vo
   return (
     <Card className="shadow-sm overflow-hidden">
         {post.imageUrl && (
-            <div className="w-full h-64 relative bg-muted">
+            <div className="w-full h-64 relative bg-muted cursor-pointer" onClick={() => onImageClick(post.imageUrl!)}>
                 <Image
                     src={post.imageUrl}
                     alt="Post image"
@@ -92,6 +92,9 @@ export default function ActivityPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+  
+  const [focusedImage, setFocusedImage] = useState<string | null>(null);
+  const [isFocusDialogOpen, setFocusDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -120,26 +123,16 @@ export default function ActivityPage() {
     setDeleteDialogOpen(true);
   };
 
+  const handleImageClick = (imageUrl: string) => {
+    setFocusedImage(imageUrl);
+    setFocusDialogOpen(true);
+  };
+
   const handleDeleteConfirm = async () => {
     if (!selectedPost) return;
     try {
-        // Delete the image from Firebase Storage if it exists
-        if (selectedPost.imageUrl) {
-            const imageRef = ref(storage, selectedPost.imageUrl);
-            await deleteObject(imageRef).catch((error) => {
-                // We can ignore 'object-not-found' error if it was already deleted or doesn't exist
-                if (error.code !== 'storage/object-not-found') {
-                    console.error("Error deleting image from storage:", error);
-                    // We can choose to not block the post deletion if image deletion fails
-                }
-            });
-        }
-        
-        // Delete the post document from Firestore
         await deleteDoc(doc(db, 'posts', selectedPost.id));
-        
         toast({ title: "Success", description: "Post deleted successfully." });
-
     } catch (error: any) {
         console.error("Error deleting post:", error);
         toast({ variant: "destructive", title: "Error", description: "Could not delete post." });
@@ -166,7 +159,7 @@ export default function ActivityPage() {
             <Skeleton className="h-48 w-full" />
           </>
         ) : posts.length > 0 ? (
-          posts.map(post => <PostItem key={post.id} post={post} onDelete={handleDeleteClick} />)
+          posts.map(post => <PostItem key={post.id} post={post} onDelete={handleDeleteClick} onImageClick={handleImageClick} />)
         ) : (
           <Card>
             <CardContent className="py-12">
@@ -183,6 +176,12 @@ export default function ActivityPage() {
         isOpen={isDeleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
+    />
+    
+    <ImageFocusDialog
+        isOpen={isFocusDialogOpen}
+        onOpenChange={setFocusDialogOpen}
+        imageUrl={focusedImage}
     />
     </>
   );

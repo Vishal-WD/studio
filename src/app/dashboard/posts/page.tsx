@@ -4,13 +4,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
+import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
 
 interface Post {
   id: string;
@@ -26,7 +27,7 @@ interface Post {
   };
 }
 
-const PostItem = ({ post }: { post: Post }) => {
+const PostItem = ({ post, onImageClick }: { post: Post, onImageClick: (imageUrl: string) => void }) => {
   const getInitials = (name = '') => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
   };
@@ -45,7 +46,7 @@ const PostItem = ({ post }: { post: Post }) => {
   return (
     <Card className="shadow-sm overflow-hidden">
         {post.imageUrl && (
-            <div className="w-full h-64 relative bg-muted">
+            <div className="w-full h-64 relative bg-muted cursor-pointer" onClick={() => onImageClick(post.imageUrl!)}>
                 <Image
                     src={post.imageUrl}
                     alt="Post image"
@@ -81,9 +82,11 @@ export default function PostsPage() {
   const { userData, loading: authLoading } = useAuth();
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  
+  const [focusedImage, setFocusedImage] = useState<string | null>(null);
+  const [isFocusDialogOpen, setFocusDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch all posts, we will filter by department on the client side
     const q = query(
       collection(db, 'posts'), 
       orderBy('createdAt', 'desc')
@@ -101,18 +104,20 @@ export default function PostsPage() {
     return () => unsubscribe();
   }, []);
 
+  const handleImageClick = (imageUrl: string) => {
+    setFocusedImage(imageUrl);
+    setFocusDialogOpen(true);
+  };
+
   const filteredPosts = useMemo(() => {
     if (authLoading || !userData) return [];
     
-    // Deans and Admins see all posts
     if (userData.role === 'admin' || userData.designation === 'dean') return allPosts;
 
-    // Students and faculty (who are not HODs) see posts from their own department.
     if(userData.role === 'student' || (userData.role === 'faculty' && userData.designation !== 'hod')) {
         return allPosts.filter(post => post.authorDepartment === userData.department);
     }
     
-    // HODs see posts from their own department
     if (userData.designation === 'hod') {
         return allPosts.filter(post => post.authorDepartment === userData.department);
     }
@@ -123,6 +128,7 @@ export default function PostsPage() {
   const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
 
   return (
+    <>
     <div className="max-w-3xl mx-auto">
        <div className="flex items-center justify-between mb-6">
         <div>
@@ -144,7 +150,7 @@ export default function PostsPage() {
             <Skeleton className="h-48 w-full" />
           </>
         ) : filteredPosts.length > 0 ? (
-          filteredPosts.map(post => <PostItem key={post.id} post={post} />)
+          filteredPosts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)
         ) : (
           <Card>
             <CardContent className="py-12">
@@ -157,5 +163,12 @@ export default function PostsPage() {
         )}
       </div>
     </div>
+    
+    <ImageFocusDialog
+        isOpen={isFocusDialogOpen}
+        onOpenChange={setFocusDialogOpen}
+        imageUrl={focusedImage}
+    />
+    </>
   );
 }
