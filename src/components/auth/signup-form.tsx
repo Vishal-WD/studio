@@ -56,6 +56,8 @@ export function SignUpForm() {
       email: "",
       password: "",
       department: "",
+      staffId: "",
+      regno: "",
     },
   });
 
