@@ -10,8 +10,9 @@ import {
 } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { useEffect } from 'react';
 
 const BottomNavBar = () => {
   const pathname = usePathname();
@@ -59,6 +60,22 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+  
+  if (loading) {
+    return <div>Loading...</div>; // Or a proper loading spinner component
+  }
+  
+  if (!user) {
+    return null; // Don't render anything while redirecting
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

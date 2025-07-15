@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -17,7 +18,7 @@ import { DeleteUserDialog } from '@/components/dashboard/delete-user-dialog';
 import { EditUserDialog } from '@/components/dashboard/edit-user-dialog';
 import { CreateUserDialog } from '@/components/dashboard/create-user-dialog';
 import { useToast } from '@/hooks/use-toast';
-
+import { deleteField } from 'firebase/firestore';
 
 interface User {
   id: string;
@@ -47,10 +48,15 @@ export default function ManageUsersPage() {
   useEffect(() => {
     if (!authLoading) {
       if (!user || userData?.role !== 'admin') {
+        toast({
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'You do not have permission to view this page.',
+        });
         router.push('/dashboard');
       }
     }
-  }, [user, userData, authLoading, router]);
+  }, [user, userData, authLoading, router, toast]);
 
   const fetchUsers = async () => {
     if (userData?.role === 'admin') {
