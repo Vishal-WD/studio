@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const BottomNavBar = () => {
   const pathname = usePathname();
@@ -54,6 +55,34 @@ const BottomNavBar = () => {
   );
 };
 
+const LoadingScreen = () => {
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Skeleton for DashboardHeader */}
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <Skeleton className="h-8 w-[320px]" />
+        <div className="flex items-center gap-2 ml-auto">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+        </div>
+      </header>
+      {/* Skeleton for main content */}
+      <main className="flex-1 p-4 md:p-6 lg:p-8 mb-16">
+        <Skeleton className="h-64 w-full" />
+      </main>
+      {/* Skeleton for BottomNavBar */}
+      <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
+          <div className="grid h-full max-w-lg grid-cols-4 mx-auto">
+              <Skeleton className="h-full w-full" />
+              <Skeleton className="h-full w-full" />
+              <Skeleton className="h-full w-full" />
+              <Skeleton className="h-full w-full" />
+          </div>
+      </div>
+    </div>
+  );
+}
+
 
 export default function DashboardLayout({
   children,
@@ -70,7 +99,7 @@ export default function DashboardLayout({
   }, [user, loading, router]);
   
   if (loading) {
-    return <div>Loading...</div>; // Or a proper loading spinner component
+    return <LoadingScreen />;
   }
   
   if (!user) {
