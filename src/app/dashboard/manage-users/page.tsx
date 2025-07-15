@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Search, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DeleteUserDialog } from '@/components/dashboard/delete-user-dialog';
+import { EditUserDialog } from '@/components/dashboard/edit-user-dialog';
 
 interface User {
   id: string;
@@ -30,6 +32,10 @@ export default function ManageUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -39,25 +45,26 @@ export default function ManageUsersPage() {
     }
   }, [user, userData, authLoading, router]);
 
-  useEffect(() => {
-    async function fetchUsers() {
-      if (userData?.role === 'admin') {
-        try {
-          const usersCollection = collection(db, 'users');
-          const usersSnapshot = await getDocs(usersCollection);
-          const usersList = usersSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as User[];
-          setUsers(usersList);
-        } catch (error) {
-          console.error("Error fetching users: ", error);
-        } finally {
-          setLoading(false);
-        }
+  const fetchUsers = async () => {
+    if (userData?.role === 'admin') {
+      try {
+        setLoading(true);
+        const usersCollection = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersCollection);
+        const usersList = usersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as User[];
+        setUsers(usersList);
+      } catch (error) {
+        console.error("Error fetching users: ", error);
+      } finally {
+        setLoading(false);
       }
     }
+  };
 
+  useEffect(() => {
     if (!authLoading && userData?.role === 'admin') {
       fetchUsers();
     }
@@ -77,7 +84,43 @@ export default function ManageUsersPage() {
     });
   }, [searchTerm, users]);
 
-  if (authLoading || loading) {
+  const handleEditClick = (user: User) => {
+    setSelectedUser(user);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleUserUpdate = async (updatedData: Partial<User>) => {
+    if (!selectedUser) return;
+    try {
+        const userDocRef = doc(db, 'users', selectedUser.uid);
+        await updateDoc(userDocRef, updatedData);
+        setEditDialogOpen(false);
+        fetchUsers(); // Refresh the user list
+    } catch (error) {
+        console.error("Error updating user:", error);
+    }
+  };
+
+  const handleUserDelete = async () => {
+    if (!selectedUser) return;
+    try {
+      // NOTE: This only deletes the Firestore record, not the Firebase Auth user.
+      // Deleting the auth user requires server-side logic (e.g., a Cloud Function).
+      const userDocRef = doc(db, 'users', selectedUser.uid);
+      await deleteDoc(userDocRef);
+      setDeleteDialogOpen(false);
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
+  if (authLoading || (loading && users.length === 0)) {
     return (
       <div className="p-4 md:p-6 lg:p-8">
         <Skeleton className="h-12 w-1/4 mb-4" />
@@ -101,6 +144,7 @@ export default function ManageUsersPage() {
   }
 
   return (
+    <>
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -152,10 +196,10 @@ export default function ManageUsersPage() {
                       <TableCell>{u.department}</TableCell>
                       <TableCell>{u.role === 'student' ? u.regno : u.staffId}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="mr-2">
+                        <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -174,5 +218,22 @@ export default function ManageUsersPage() {
         </CardContent>
       </Card>
     </div>
+    {selectedUser && (
+      <>
+        <EditUserDialog 
+          isOpen={isEditDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          user={selectedUser}
+          onSave={handleUserUpdate}
+        />
+        <DeleteUserDialog
+          isOpen={isDeleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleUserDelete}
+          username={selectedUser.username}
+        />
+      </>
+    )}
+    </>
   );
 }
