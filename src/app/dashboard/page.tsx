@@ -1,39 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { EventFeed } from "@/components/dashboard/event-feed";
 import { ClubFeed } from "@/components/dashboard/club-feed";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CreatePostDialog } from "@/components/dashboard/create-post-dialog";
-import { auth, db } from "@/lib/firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-
-interface UserData {
-  username?: string;
-  // add other user properties here if needed
-}
+import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          setUserData(userDocSnap.data() as UserData);
-        }
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const { userData, loading } = useAuth();
 
   return (
     <main className="flex-1 p-4 md:p-6 lg:p-8">

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -94,12 +93,6 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
-        <div className="mt-4 text-center text-sm">
-          Don't have an account?{" "}
-          <Link href="/sign-up" className="font-medium text-primary underline hover:text-primary/90">
-            Sign up
-          </Link>
-        </div>
       </CardContent>
     </Card>
   );

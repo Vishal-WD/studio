@@ -1,3 +1,5 @@
+'use client';
+
 import {
   SidebarProvider,
   Sidebar,
@@ -8,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
   Calendar,
@@ -16,16 +18,37 @@ import {
   MessageSquare,
   LogOut,
   Settings,
-} from "lucide-react";
-import { Logo } from "@/components/logo";
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import Link from "next/link";
+  ShieldCheck,
+} from 'lucide-react';
+import { Logo } from '@/components/logo';
+import { DashboardHeader } from '@/components/dashboard/dashboard-header';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const { userData } = useAuth();
+
+  const menuItems = [
+    { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
+    { href: '/dashboard/events', icon: <Calendar />, label: 'Events' },
+    { href: '/dashboard/clubs', icon: <Users />, label: 'Clubs' },
+    { href: '/dashboard/posts', icon: <MessageSquare />, label: 'Posts' },
+  ];
+
+  const adminMenuItems = [
+    {
+      href: '/dashboard/manage-users',
+      icon: <ShieldCheck />,
+      label: 'Manage Users',
+    },
+  ];
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -34,38 +57,33 @@ export default function DashboardLayout({
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive>
-                <Link href="/dashboard">
-                  <LayoutDashboard />
-                  Dashboard
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="#">
-                  <Calendar />
-                  Events
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="#">
-                  <Users />
-                  Clubs
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="#">
-                  <MessageSquare />
-                  Posts
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {menuItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                >
+                  <Link href={item.href}>
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+            {userData?.role === 'admin' &&
+              adminMenuItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.href}
+                  >
+                    <Link href={item.href}>
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
