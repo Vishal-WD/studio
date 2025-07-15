@@ -7,6 +7,7 @@ import {
   Users,
   MessageSquare,
   ShieldCheck,
+  Activity,
 } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import Link from 'next/link';
@@ -23,7 +24,7 @@ const BottomNavBar = () => {
   if (loading) {
     return (
         <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
-            <div className="grid h-full max-w-lg mx-auto grid-cols-4">
+            <div className="grid h-full max-w-lg mx-auto grid-cols-5">
                 {/* You can add skeleton loaders here if you want */}
             </div>
         </div>
@@ -35,6 +36,7 @@ const BottomNavBar = () => {
     { href: '/dashboard/events', icon: <Calendar />, label: 'Events' },
     { href: '/dashboard/clubs', icon: <Users />, label: 'Clubs' },
     { href: '/dashboard/posts', icon: <MessageSquare />, label: 'Posts' },
+    { href: '/dashboard/activity', icon: <Activity />, label: 'Activity' },
     ...(userData?.role === 'admin' ? [{ href: '/dashboard/manage-users', icon: <ShieldCheck />, label: 'Users' }] : []),
   ];
 
@@ -72,7 +74,8 @@ const LoadingScreen = () => {
       </main>
       {/* Skeleton for BottomNavBar */}
       <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
-          <div className="grid h-full max-w-lg grid-cols-4 mx-auto">
+          <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
+              <Skeleton className="h-full w-full" />
               <Skeleton className="h-full w-full" />
               <Skeleton className="h-full w-full" />
               <Skeleton className="h-full w-full" />

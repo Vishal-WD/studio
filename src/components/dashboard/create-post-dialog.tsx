@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -11,30 +12,63 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Image as ImageIcon, Paperclip } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export function CreatePostDialog() {
   const [open, setOpen] = useState(false);
+  const [content, setContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user, userData } = useAuth();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // In a real app, you would handle form data submission here.
-    toast({
-      title: "Post created!",
-      description: "Your post has been successfully shared.",
-    });
-    setOpen(false);
+    if (!content.trim() || !user || !userData) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Post content cannot be empty.",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, "posts"), {
+        authorId: user.uid,
+        authorName: userData.username,
+        content: content,
+        createdAt: serverTimestamp(),
+      });
+
+      toast({
+        title: "Post created!",
+        description: "Your post has been successfully shared.",
+      });
+      setContent("");
+      setOpen(false);
+    } catch (error) {
+      console.error("Error creating post:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not create post. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full bg-primary hover:bg-primary/90">
+        <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
           Create Post
         </Button>
@@ -50,26 +84,20 @@ export function CreatePostDialog() {
           <div className="grid gap-4 py-4">
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="content">Content</Label>
-              <Textarea placeholder="What's on your mind?" id="content" required />
-            </div>
-            <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="image" className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                Attach an Image
-              </Label>
-              <Input id="image" type="file" accept="image/*" />
-            </div>
-            <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="attachment" className="flex items-center gap-2">
-                <Paperclip className="h-4 w-4 text-muted-foreground" />
-                Attach a File
-              </Label>
-              <Input id="attachment" type="file" />
+              <Textarea 
+                placeholder="What's on your mind?" 
+                id="content" 
+                required 
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90">Post</Button>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Posting..." : "Post"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

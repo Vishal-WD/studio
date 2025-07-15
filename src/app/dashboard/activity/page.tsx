@@ -2,11 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
 import { useAuth } from '@/hooks/use-auth';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,7 +39,6 @@ const PostItem = ({ post }: { post: Post }) => {
             <p className="font-semibold">{post.authorName}</p>
             <p className="text-xs text-muted-foreground">{formattedDate}</p>
           </div>
-          <p className="text-sm text-muted-foreground">Author ID: {post.authorId}</p>
         </div>
       </CardHeader>
       <CardContent>
@@ -50,44 +48,42 @@ const PostItem = ({ post }: { post: Post }) => {
   );
 };
 
-
-export default function PostsPage() {
-  const { userData, loading: authLoading } = useAuth();
+export default function ActivityPage() {
+  const { user, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setPosts(postsData);
-      setLoadingPosts(false);
-    }, (error) => {
-      console.error("Error fetching posts:", error);
-      setLoadingPosts(false);
-    });
+    if (user) {
+      const q = query(
+        collection(db, 'posts'), 
+        where('authorId', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        setPosts(postsData);
+        setLoadingPosts(false);
+      }, (error) => {
+        console.error("Error fetching user posts:", error);
+        setLoadingPosts(false);
+      });
 
-    return () => unsubscribe();
-  }, []);
-
-  const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod' || userData?.designation === 'club_incharge';
+      return () => unsubscribe();
+    } else if (!authLoading) {
+      setLoadingPosts(false);
+    }
+  }, [user, authLoading]);
 
   return (
     <div className="max-w-3xl mx-auto">
-       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Community Posts</h1>
-          <p className="text-muted-foreground">Catch up on announcements and what's on everyone's mind.</p>
-        </div>
-        {authLoading ? (
-            <Skeleton className="h-10 w-32" />
-        ) : (
-            canCreatePost && <CreatePostDialog />
-        )}
+      <div className="mb-6">
+        <h1 className="text-3xl font-headline font-bold">My Activity</h1>
+        <p className="text-muted-foreground">A collection of all the posts you've created.</p>
       </div>
-    
+
       <div className="space-y-4">
-        {loadingPosts ? (
+        {loadingPosts || authLoading ? (
           <>
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
@@ -99,7 +95,7 @@ export default function PostsPage() {
           <Card>
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
-                <p>No posts yet. Be the first to share something!</p>
+                <p>You haven't created any posts yet.</p>
               </div>
             </CardContent>
           </Card>
