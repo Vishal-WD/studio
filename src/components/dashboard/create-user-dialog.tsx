@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -29,10 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { app, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { initializeApp, deleteApp } from 'firebase/app';
 
 
 interface CreateUserDialogProps {
@@ -89,9 +91,13 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
+    // Create a temporary secondary app to create users without logging out the admin
+    const tempApp = initializeApp(app.options, `temp-user-creation-${new Date().getTime()}`);
+    const tempAuth = getAuth(tempApp);
+
     try {
-      // 1. Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      // 1. Create user in Firebase Auth using the temporary instance
+      const userCredential = await createUserWithEmailAndPassword(tempAuth, values.email, values.password);
       const user = userCredential.user;
 
       // 2. Create user document in Firestore
@@ -123,6 +129,8 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
       });
     } finally {
       setIsSubmitting(false);
+      // Clean up the temporary app instance
+      await deleteApp(tempApp);
     }
   };
 
