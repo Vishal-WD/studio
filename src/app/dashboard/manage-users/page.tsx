@@ -30,6 +30,7 @@ interface User {
   regno?: string;
   staffId?: string;
   designation?: 'dean' | 'hod' | 'club_incharge';
+  clubInchargeOf?: string;
 }
 
 export default function ManageUsersPage() {
@@ -144,6 +145,15 @@ export default function ManageUsersPage() {
     fetchUsers(); // Refresh the user list
   };
 
+  const getDesignationDisplay = (user: User) => {
+    if (!user.designation) return 'N/A';
+    let display = user.designation.replace('_', ' ');
+    if (user.designation === 'club_incharge' && user.clubInchargeOf) {
+        display += ` (${user.clubInchargeOf})`;
+    }
+    return <span className="capitalize">{display}</span>;
+  }
+
   if (authLoading || (loading && users.length === 0)) {
     return (
       <div className="p-4 md:p-6 lg:p-8">
@@ -218,7 +228,7 @@ export default function ManageUsersPage() {
                       <TableCell>
                         <Badge variant={u.role === 'admin' ? 'destructive' : 'secondary'}>{u.role}</Badge>
                       </TableCell>
-                       <TableCell className="capitalize">{u.designation?.replace('_', ' ') || 'N/A'}</TableCell>
+                       <TableCell>{getDesignationDisplay(u)}</TableCell>
                       <TableCell>{u.department}</TableCell>
                       <TableCell>{u.role === 'student' ? u.regno : u.staffId}</TableCell>
                       <TableCell className="text-right">

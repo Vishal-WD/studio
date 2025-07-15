@@ -42,6 +42,7 @@ interface User {
   regno?: string;
   staffId?: string;
   designation?: 'dean' | 'hod' | 'club_incharge';
+  clubInchargeOf?: string;
 }
 
 interface EditUserDialogProps {
@@ -56,6 +57,7 @@ const formSchema = z.object({
   department: z.string().min(1, 'Department is required'),
   role: z.enum(['student', 'faculty', 'admin']),
   designation: z.enum(['none', 'dean', 'hod', 'club_incharge']).optional(),
+  clubInchargeOf: z.string().optional(),
   regno: z.string().optional(),
   staffId: z.string().optional(),
 });
@@ -68,12 +70,14 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
       department: user.department,
       role: user.role,
       designation: user.designation || 'none',
+      clubInchargeOf: user.clubInchargeOf || '',
       regno: user.regno || '',
       staffId: user.staffId || '',
     },
   });
 
   const watchedRole = form.watch('role');
+  const watchedDesignation = form.watch('designation');
 
   useEffect(() => {
     form.reset({
@@ -81,6 +85,7 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
       department: user.department,
       role: user.role,
       designation: user.designation || 'none',
+      clubInchargeOf: user.clubInchargeOf || '',
       regno: user.regno || '',
       staffId: user.staffId || '',
     });
@@ -96,13 +101,20 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
       dataToSave.regno = values.regno || '';
       dataToSave.staffId = deleteField();
       dataToSave.designation = deleteField();
+      dataToSave.clubInchargeOf = deleteField();
     } else {
       dataToSave.staffId = values.staffId || '';
       dataToSave.regno = deleteField();
       if (values.designation && values.designation !== 'none') {
         dataToSave.designation = values.designation;
+         if (values.designation === 'club_incharge') {
+          dataToSave.clubInchargeOf = values.clubInchargeOf || '';
+        } else {
+          dataToSave.clubInchargeOf = deleteField();
+        }
       } else {
         dataToSave.designation = deleteField();
+        dataToSave.clubInchargeOf = deleteField();
       }
     }
     onSave(dataToSave);
@@ -220,6 +232,21 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
                     </FormItem>
                   )}
                 />
+                 {watchedDesignation === 'club_incharge' && (
+                  <FormField
+                    control={form.control}
+                    name="clubInchargeOf"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Incharge of which club?</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </>
             )}
             <DialogFooter>

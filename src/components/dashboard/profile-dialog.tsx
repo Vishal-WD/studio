@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Mail, Building, Briefcase, BadgeCheck, UserCircle2, Hash } from 'lucide-react';
+import { User, Mail, Building, Briefcase, BadgeCheck, UserCircle2, Hash, Group } from 'lucide-react';
 
 export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { userData, loading } = useAuth();
@@ -75,6 +75,9 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                 <DetailItem icon={<Building size={20} />} label="Department" value={userData.department} />
                  {userData.designation && (
                   <DetailItem icon={<BadgeCheck size={20} />} label="Designation" value={formatDesignation(userData.designation)} />
+                )}
+                {userData.designation === 'club_incharge' && userData.clubInchargeOf && (
+                  <DetailItem icon={<Group size={20} />} label="Incharge Of" value={userData.clubInchargeOf} />
                 )}
                 {userData.role === 'student' && (
                   <DetailItem icon={<Hash size={20} />} label="Registration No." value={userData.regno} />
