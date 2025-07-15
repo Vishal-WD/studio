@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Bell, Search, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +17,13 @@ import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { ProfileDialog } from "./profile-dialog";
 
 export function DashboardHeader() {
   const { userData } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [isProfileOpen, setProfileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -40,6 +43,7 @@ export function DashboardHeader() {
 
 
   return (
+    <>
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <div className="relative flex-1">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -90,7 +94,7 @@ export function DashboardHeader() {
               <div className="text-xs text-muted-foreground font-normal">{userData?.email}</div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => alert('Profile page coming soon!')}>Profile</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setProfileOpen(true)} className="cursor-pointer">Profile</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer">
               Logout
@@ -99,5 +103,7 @@ export function DashboardHeader() {
         </DropdownMenu>
       </div>
     </header>
+    <ProfileDialog open={isProfileOpen} onOpenChange={setProfileOpen} />
+    </>
   );
 }
