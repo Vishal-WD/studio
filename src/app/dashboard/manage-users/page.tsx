@@ -29,8 +29,7 @@ interface User {
   department: string;
   regno?: string;
   staffId?: string;
-  designation?: 'dean' | 'hod' | 'club_incharge';
-  clubInchargeOf?: string;
+  designation?: 'dean' | 'hod';
 }
 
 export default function ManageUsersPage() {
@@ -148,9 +147,6 @@ export default function ManageUsersPage() {
   const getDesignationDisplay = (user: User) => {
     if (!user.designation) return 'N/A';
     let display = user.designation.replace('_', ' ');
-    if (user.designation === 'club_incharge' && user.clubInchargeOf) {
-        display += ` (${user.clubInchargeOf})`;
-    }
     return <span className="capitalize">{display}</span>;
   }
 

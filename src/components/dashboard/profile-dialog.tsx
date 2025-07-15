@@ -76,9 +76,6 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                  {userData.designation && (
                   <DetailItem icon={<BadgeCheck size={20} />} label="Designation" value={formatDesignation(userData.designation)} />
                 )}
-                {userData.designation === 'club_incharge' && userData.clubInchargeOf && (
-                  <DetailItem icon={<Group size={20} />} label="Incharge Of" value={userData.clubInchargeOf} />
-                )}
                 {userData.role === 'student' && (
                   <DetailItem icon={<Hash size={20} />} label="Registration No." value={userData.regno} />
                 )}

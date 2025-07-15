@@ -1,7 +1,6 @@
 "use client";
 
 import { EventFeed } from "@/components/dashboard/event-feed";
-import { ClubFeed } from "@/components/dashboard/club-feed";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -12,7 +11,6 @@ export default function DashboardPage() {
     <div className="grid gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-8">
         <EventFeed />
-        <ClubFeed />
       </div>
       <div className="lg:col-span-1">
         <div className="sticky top-20 space-y-6">

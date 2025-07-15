@@ -49,8 +49,7 @@ const formSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   department: z.string().min(1, 'Department is required'),
   role: z.enum(['student', 'faculty', 'admin']),
-  designation: z.enum(['none', 'dean', 'hod', 'club_incharge']).optional(),
-  clubInchargeOf: z.string().optional(),
+  designation: z.enum(['none', 'dean', 'hod']).optional(),
   regno: z.string().optional(),
   staffId: z.string().optional(),
 }).refine(data => {
@@ -69,14 +68,6 @@ const formSchema = z.object({
 }, {
     message: "Staff ID is required for faculty and admins.",
     path: ['staffId'],
-}).refine(data => {
-    if (data.designation === 'club_incharge' && !data.clubInchargeOf) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Club name is required for Club Incharge.",
-    path: ['clubInchargeOf'],
 });
 
 
@@ -93,14 +84,12 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
       department: '',
       role: 'student',
       designation: 'none',
-      clubInchargeOf: '',
       regno: '',
       staffId: '',
     },
   });
 
   const watchedRole = form.watch('role');
-  const watchedDesignation = form.watch('designation');
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
@@ -128,9 +117,6 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
         userData.staffId = values.staffId;
         if (values.designation && values.designation !== 'none') {
           userData.designation = values.designation;
-          if (values.designation === 'club_incharge') {
-            userData.clubInchargeOf = values.clubInchargeOf;
-          }
         }
       }
       
@@ -284,28 +270,12 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                           <SelectItem value="none">None</SelectItem>
                           <SelectItem value="dean">Dean</SelectItem>
                           <SelectItem value="hod">HOD</SelectItem>
-                          <SelectItem value="club_incharge">Club Incharge</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {watchedDesignation === 'club_incharge' && (
-                  <FormField
-                    control={form.control}
-                    name="clubInchargeOf"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Incharge of which club?</FormLabel>
-                        <FormControl>
-                          <Input placeholder="E.g. Robotics Club" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </>
             )}
             <DialogFooter>
