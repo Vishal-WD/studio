@@ -101,80 +101,78 @@ export default function ManageUsersPage() {
   }
 
   return (
-    <main className="flex-1 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
-            <p className="text-muted-foreground">Create, view, edit, and delete user accounts.</p>
-          </div>
-          <Button>
-            <PlusCircle className="mr-2" />
-            Create User
-          </Button>
+    <div className="max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
+          <p className="text-muted-foreground">Create, view, edit, and delete user accounts.</p>
         </div>
+        <Button>
+          <PlusCircle className="mr-2" />
+          Create User
+        </Button>
+      </div>
 
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle>All Users</CardTitle>
-            <CardDescription>A list of all users in the system.</CardDescription>
-            <div className="relative pt-4">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search by name, email, ID, or department..." 
-                className="pl-8 w-full md:w-1/3"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>ID (Reg/Staff)</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium">{u.username}</TableCell>
-                        <TableCell>{u.email}</TableCell>
-                        <TableCell>
-                          <Badge variant={u.role === 'admin' ? 'destructive' : 'secondary'}>{u.role}</Badge>
-                        </TableCell>
-                        <TableCell>{u.department}</TableCell>
-                        <TableCell>{u.role === 'student' ? u.regno : u.staffId}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" className="mr-2">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        No users found.
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>All Users</CardTitle>
+          <CardDescription>A list of all users in the system.</CardDescription>
+          <div className="relative pt-4">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search by name, email, ID, or department..." 
+              className="pl-8 w-full md:w-1/3"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>ID (Reg/Staff)</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.username}</TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell>
+                        <Badge variant={u.role === 'admin' ? 'destructive' : 'secondary'}>{u.role}</Badge>
+                      </TableCell>
+                      <TableCell>{u.department}</TableCell>
+                      <TableCell>{u.role === 'student' ? u.regno : u.staffId}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" className="mr-2">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      No users found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
