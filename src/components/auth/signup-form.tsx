@@ -75,10 +75,16 @@ export function SignUpForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      const { password, ...userData } = values;
+      const { password, ...userDataToStore } = values;
+
+      if (userDataToStore.role === 'student') {
+        delete userDataToStore.staffId;
+      } else if (userDataToStore.role === 'faculty' || userDataToStore.role === 'admin') {
+        delete userDataToStore.regno;
+      }
 
       await setDoc(doc(db, "users", user.uid), {
-        ...userData,
+        ...userDataToStore,
         uid: user.uid,
       });
 
