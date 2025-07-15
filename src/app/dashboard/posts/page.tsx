@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
-import Image from 'next/image';
 
 interface Post {
   id: string;
@@ -19,7 +18,6 @@ interface Post {
   authorDepartment?: string;
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
-  imageUrl?: string;
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -44,11 +42,6 @@ const PostItem = ({ post }: { post: Post }) => {
 
   return (
     <Card className="shadow-sm overflow-hidden">
-      {post.imageUrl && (
-        <div className="w-full h-64 relative bg-muted">
-            <Image src={post.imageUrl} alt="Post image" layout="fill" className="object-cover" />
-        </div>
-      )}
       <CardHeader className="flex flex-row items-start gap-4 space-y-0">
         <Avatar>
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>

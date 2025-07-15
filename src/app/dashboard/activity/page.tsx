@@ -3,8 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
-import { ref, deleteObject } from 'firebase/storage';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { DeletePostDialog } from '@/components/dashboard/delete-post-dialog';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 
 
 interface Post {
@@ -24,8 +22,6 @@ interface Post {
   authorDepartment?: string;
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
-  imageUrl?: string;
-  imagePath?: string;
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -50,11 +46,6 @@ const PostItem = ({ post, onDelete }: { post: Post, onDelete: (post: Post) => vo
 
   return (
     <Card className="shadow-sm overflow-hidden">
-      {post.imageUrl && (
-        <div className="w-full h-64 relative bg-muted">
-            <Image src={post.imageUrl} alt="Post image" layout="fill" className="object-cover" />
-        </div>
-      )}
       <CardHeader className="flex flex-row items-start gap-4 space-y-0">
         <Avatar>
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
@@ -119,29 +110,13 @@ export default function ActivityPage() {
   const handleDeleteConfirm = async () => {
     if (!selectedPost) return;
     try {
-        // Delete image from storage if it exists
-        if (selectedPost.imagePath) {
-          const imageRef = ref(storage, selectedPost.imagePath);
-          await deleteObject(imageRef);
-        }
-
         // Delete post from Firestore
         await deleteDoc(doc(db, 'posts', selectedPost.id));
         
         toast({ title: "Success", description: "Post deleted successfully." });
     } catch (error: any) {
         console.error("Error deleting post:", error);
-         if (error.code === 'storage/object-not-found') {
-            // If image not found, still try to delete the post record
-            try {
-                await deleteDoc(doc(db, 'posts', selectedPost.id));
-                toast({ title: "Success", description: "Post deleted successfully." });
-            } catch (dbError) {
-                 toast({ variant: "destructive", title: "Error", description: "Could not delete post record." });
-            }
-        } else {
-            toast({ variant: "destructive", title: "Error", description: "Could not delete post." });
-        }
+        toast({ variant: "destructive", title: "Error", description: "Could not delete post." });
     } finally {
         setDeleteDialogOpen(false);
         setSelectedPost(null);
