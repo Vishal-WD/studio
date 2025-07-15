@@ -20,8 +20,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 const formSchema = z.object({
   username: z.string().min(2, { message: "Username must be at least 2 characters." }),
@@ -71,7 +72,16 @@ export function SignUpForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      const { password, ...userData } = values;
+
+      await setDoc(doc(db, "users", user.uid), {
+        ...userData,
+        uid: user.uid,
+      });
+
       toast({
         title: "Account created successfully!",
         description: "You can now log in.",
