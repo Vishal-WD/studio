@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, deleteObject } from 'firebase/storage';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -58,7 +59,7 @@ const PostItem = ({ post, onDelete }: { post: Post, onDelete: (post: Post) => vo
                 />
             </div>
         )}
-      <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+      <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
         <Avatar>
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
         </Avatar>
@@ -77,7 +78,7 @@ const PostItem = ({ post, onDelete }: { post: Post, onDelete: (post: Post) => vo
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 pb-4 pt-0">
         <p className="whitespace-pre-wrap">{post.content}</p>
       </CardContent>
     </Card>
@@ -122,8 +123,23 @@ export default function ActivityPage() {
   const handleDeleteConfirm = async () => {
     if (!selectedPost) return;
     try {
+        // Delete the image from Firebase Storage if it exists
+        if (selectedPost.imageUrl) {
+            const imageRef = ref(storage, selectedPost.imageUrl);
+            await deleteObject(imageRef).catch((error) => {
+                // We can ignore 'object-not-found' error if it was already deleted or doesn't exist
+                if (error.code !== 'storage/object-not-found') {
+                    console.error("Error deleting image from storage:", error);
+                    // We can choose to not block the post deletion if image deletion fails
+                }
+            });
+        }
+        
+        // Delete the post document from Firestore
         await deleteDoc(doc(db, 'posts', selectedPost.id));
+        
         toast({ title: "Success", description: "Post deleted successfully." });
+
     } catch (error: any) {
         console.error("Error deleting post:", error);
         toast({ variant: "destructive", title: "Error", description: "Could not delete post." });

@@ -55,7 +55,7 @@ const PostItem = ({ post }: { post: Post }) => {
                 />
             </div>
         )}
-      <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+      <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
         <Avatar>
           <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
         </Avatar>
@@ -69,7 +69,7 @@ const PostItem = ({ post }: { post: Post }) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 pb-4 pt-0">
         <p className="whitespace-pre-wrap">{post.content}</p>
       </CardContent>
     </Card>

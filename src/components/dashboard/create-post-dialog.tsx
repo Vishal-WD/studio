@@ -14,17 +14,18 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Paperclip, X } from "lucide-react";
+import { PlusCircle, Paperclip, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 import Image from "next/image";
 
 export function CreatePostDialog() {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [image, setImage] = useState<{dataUrl: string, file: File} | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -33,20 +34,20 @@ export function CreatePostDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 1 * 1024 * 1024) { // 1MB limit for Base64
-        toast({ variant: "destructive", title: "Error", description: "Image file size should not exceed 1MB." });
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ variant: "destructive", title: "Error", description: "Image file size should not exceed 5MB." });
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageBase64(reader.result as string);
+        setImage({ dataUrl: reader.result as string, file });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const removeImage = () => {
-    setImageBase64(null);
+    setImage(null);
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -77,7 +78,6 @@ export function CreatePostDialog() {
       return;
     }
     
-    // Check if user is authorized
     const isAuthorized = userData.designation === 'dean' || userData.designation === 'hod';
     if (!isAuthorized) {
         toast({ variant: "destructive", title: "Unauthorized", description: "You do not have permission to create posts." });
@@ -86,6 +86,13 @@ export function CreatePostDialog() {
 
     setIsSubmitting(true);
     try {
+      let imageUrl = "";
+      if (image) {
+        const imageRef = ref(storage, `posts/${user.uid}/${Date.now()}-${image.file.name}`);
+        const uploadResult = await uploadString(imageRef, image.dataUrl, 'data_url');
+        imageUrl = await getDownloadURL(uploadResult.ref);
+      }
+
       const postData: any = {
         authorId: user.uid,
         authorName: userData.username,
@@ -93,11 +100,8 @@ export function CreatePostDialog() {
         content: content,
         createdAt: serverTimestamp(),
         authorDepartment: userData.department || "",
+        ...(imageUrl && { imageUrl }),
       };
-
-      if (imageBase64) {
-        postData.imageUrl = imageBase64;
-      }
 
       await addDoc(collection(db, "posts"), postData);
 
@@ -114,7 +118,7 @@ export function CreatePostDialog() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not create post. The data might be too large.",
+        description: "Could not create post. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -150,10 +154,10 @@ export function CreatePostDialog() {
               />
             </div>
 
-            {imageBase64 && (
+            {image && (
               <div className="relative group">
                 <Image 
-                    src={imageBase64} 
+                    src={image.dataUrl} 
                     alt="Image preview" 
                     width={500}
                     height={300}
@@ -190,7 +194,12 @@ export function CreatePostDialog() {
                 Add Image
             </Button>
             <Button type="submit" disabled={isSubmitting || !content.trim()}>
-              {isSubmitting ? "Posting..." : "Post"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Posting...
+                </>
+              ) : "Post"}
             </Button>
           </DialogFooter>
         </form>
