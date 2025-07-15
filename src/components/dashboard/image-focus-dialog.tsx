@@ -53,6 +53,7 @@ export function ImageFocusDialog({ isOpen, onOpenChange, imageUrl }: ImageFocusD
                     alt="Focused image"
                     fill
                     className="object-contain"
+                    sizes="90vw"
                 />
             </div>
         )}

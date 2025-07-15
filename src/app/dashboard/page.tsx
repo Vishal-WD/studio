@@ -1,6 +1,8 @@
+
 "use client";
 
-import { EventFeed } from "@/components/dashboard/event-feed";
+import { LatestEventsFeed } from "@/components/dashboard/latest-events-feed";
+import { LatestPostsFeed } from "@/components/dashboard/latest-posts-feed";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -10,7 +12,8 @@ export default function DashboardPage() {
   return (
     <div className="grid gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-8">
-        <EventFeed />
+        <LatestEventsFeed />
+        <LatestPostsFeed />
       </div>
       <div className="lg:col-span-1">
         <div className="sticky top-20 space-y-6">

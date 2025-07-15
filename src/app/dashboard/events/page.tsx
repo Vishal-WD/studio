@@ -4,74 +4,11 @@
 import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { CreateEventDialog } from '@/components/dashboard/create-event-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, Calendar, MapPin, User } from 'lucide-react';
-import Image from 'next/image';
-import { format } from 'date-fns';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  location: string;
-  imageUrl?: string;
-  authorName: string;
-  registrationLink?: string;
-  createdAt: {
-    seconds: number;
-    nanoseconds: number;
-  };
-}
-
-const EventItem = ({ event }: { event: Event }) => {
-  return (
-    <Link href={`/dashboard/events/${event.id}`} className="flex">
-        <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 w-full">
-        {event.imageUrl && (
-            <CardHeader className="p-0">
-            <Image
-                src={event.imageUrl}
-                alt={event.title}
-                width={600}
-                height={400}
-                className="w-full h-48 object-cover"
-            />
-            </CardHeader>
-        )}
-        <CardContent className="p-4 flex-1">
-            <CardTitle className="font-headline text-lg mb-2">{event.title}</CardTitle>
-            <CardDescription className="line-clamp-3">{event.description}</CardDescription>
-        </CardContent>
-        <CardFooter className="p-4 bg-muted/50 flex flex-col items-start gap-2">
-            <div className="flex items-center text-sm text-muted-foreground gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>{format(new Date(event.date), "MMMM dd, yyyy")}</span>
-            </div>
-            <div className="flex items-center text-sm text-muted-foreground gap-2">
-            <MapPin className="h-4 w-4" />
-            <span>{event.location}</span>
-            </div>
-            <div className="flex items-center text-sm text-muted-foreground gap-2 pt-2">
-            <User className="h-4 w-4" />
-            <span>Created by {event.authorName}</span>
-            </div>
-            <div className="w-full text-right mt-2">
-                 <Button variant="link" className="p-0 h-auto text-primary">
-                    View Details <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-            </div>
-        </CardFooter>
-        </Card>
-    </Link>
-  );
-};
-
+import { EventItem, type Event } from '@/components/dashboard/event-item';
 
 export default function EventsPage() {
   const { userData, loading: authLoading } = useAuth();
@@ -112,7 +49,7 @@ export default function EventsPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {loadingEvents || authLoading ? (
           <>
-            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
+            {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
           </>
         ) : events.length > 0 ? (
           events.map(event => <EventItem key={event.id} event={event} />)

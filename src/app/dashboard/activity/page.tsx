@@ -7,116 +7,31 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Trash2, Calendar, FileText } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
 import Link from 'next/link';
+import { PostItem, type Post as PostType } from '@/components/dashboard/post-item';
+import { type Event as EventType } from '@/components/dashboard/event-item';
 
-interface Post {
-  id: string;
-  type: 'post';
-  authorName: string;
-  authorId: string;
-  authorDepartment?: string;
-  authorDesignation?: 'dean' | 'hod' | 'club_incharge';
-  content: string;
-  imageUrl?: string;
-  createdAt: {
-    seconds: number;
-    nanoseconds: number;
-  };
-}
+type PostActivity = PostType & { type: 'post' };
+type EventActivity = EventType & { type: 'event' };
+type Activity = PostActivity | EventActivity;
 
-interface Event {
-    id: string;
-    type: 'event';
-    title: string;
-    description: string;
-    authorName: string;
-    authorId: string;
-    imageUrl?: string;
-    createdAt: {
-      seconds: number;
-      nanoseconds: number;
-    };
-  }
-
-type Activity = Post | Event;
-
-const PostItem = ({ post, onDelete, onImageClick }: { post: Post, onDelete: (activity: Activity) => void, onImageClick: (imageUrl: string) => void }) => {
-  const getInitials = (name = '') => {
-    return name.split(' ').map((n) => n[0]).join('').toUpperCase();
-  };
-  
-  const formattedDate = post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
-
-  const getDesignationDisplay = () => {
-    if (!post.authorDesignation) return null;
-    const designation = post.authorDesignation.replace('_', ' ');
-    if ((post.authorDesignation === 'dean' || post.authorDesignation === 'hod') && post.authorDepartment) {
-      return <p className="text-xs text-muted-foreground capitalize">{designation} of {post.authorDepartment}</p>;
-    }
-    return <p className="text-xs text-muted-foreground capitalize">{designation}</p>;
-  }
-
-  return (
-    <Card className="shadow-sm overflow-hidden">
-        {post.imageUrl && (
-            <div className="w-full h-64 relative bg-muted cursor-pointer" onClick={() => onImageClick(post.imageUrl!)}>
-                <Image
-                    src={post.imageUrl}
-                    alt="Post image"
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-            </div>
-        )}
-      <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
-        <Avatar>
-          <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-             <div>
-              <p className="font-semibold">{post.authorName}</p>
-              {getDesignationDisplay()}
-            </div>
-            <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">{formattedDate}</p>
-                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(post)}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="px-4 pb-4 pt-0">
-        <p className="whitespace-pre-wrap">{post.content}</p>
-      </CardContent>
-    </Card>
-  );
-};
-
-
-const EventItem = ({ event, onDelete, onImageClick }: { event: Event, onDelete: (activity: Activity) => void, onImageClick: (imageUrl: string) => void }) => {
+const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, onDelete: (activity: Activity) => void, onImageClick: (imageUrl: string) => void }) => {
     const formattedDate = event.createdAt ? formatDistanceToNow(new Date(event.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
   
     return (
       <Card className="shadow-sm overflow-hidden">
          {event.imageUrl && (
             <div className="w-full h-64 relative bg-muted cursor-pointer" onClick={() => onImageClick(event.imageUrl!)}>
-                <Image
+                <img
                     src={event.imageUrl}
                     alt={event.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="w-full h-full object-cover"
                 />
             </div>
         )}
@@ -153,7 +68,6 @@ export default function ActivityPage() {
   const { toast } = useToast();
   
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
-  const [isFocusDialogOpen, setFocusDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -169,7 +83,7 @@ export default function ActivityPage() {
       );
 
       const unsubscribePosts = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'post', ...doc.data() } as Post));
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'post', ...doc.data() } as PostActivity));
         setActivities(prev => {
             const otherActivities = prev.filter(a => a.type !== 'post');
             const all = [...otherActivities, ...postsData].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
@@ -179,7 +93,7 @@ export default function ActivityPage() {
       });
 
       const unsubscribeEvents = onSnapshot(eventsQuery, (querySnapshot) => {
-        const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'event', ...doc.data() } as Event));
+        const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'event', ...doc.data() } as EventActivity));
          setActivities(prev => {
             const otherActivities = prev.filter(a => a.type !== 'event');
             const all = [...otherActivities, ...eventsData].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
@@ -205,7 +119,6 @@ export default function ActivityPage() {
 
   const handleImageClick = (imageUrl: string) => {
     setFocusedImage(imageUrl);
-    setFocusDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -242,7 +155,13 @@ export default function ActivityPage() {
         ) : activities.length > 0 ? (
           activities.map(activity => {
             if (activity.type === 'post') {
-                return <PostItem key={`post-${activity.id}`} post={activity} onDelete={handleDeleteClick} onImageClick={handleImageClick} />
+                return (
+                    <PostItem key={`post-${activity.id}`} post={activity} onImageClick={handleImageClick}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteClick(activity); }}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </PostItem>
+                )
             }
             if (activity.type === 'event') {
                 return <EventItem key={`event-${activity.id}`} event={activity} onDelete={handleDeleteClick} onImageClick={handleImageClick} />
@@ -269,8 +188,8 @@ export default function ActivityPage() {
     />
     
     <ImageFocusDialog
-        isOpen={isFocusDialogOpen}
-        onOpenChange={setFocusDialogOpen}
+        isOpen={!!focusedImage}
+        onOpenChange={(isOpen) => !isOpen && setFocusedImage(null)}
         imageUrl={focusedImage}
     />
     </>
