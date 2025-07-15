@@ -43,6 +43,8 @@ export function CreatePostDialog() {
       await addDoc(collection(db, "posts"), {
         authorId: user.uid,
         authorName: userData.username,
+        authorDepartment: userData.department,
+        authorDesignation: userData.designation,
         content: content,
         createdAt: serverTimestamp(),
       });

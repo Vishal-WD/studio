@@ -15,6 +15,8 @@ interface Post {
   id: string;
   authorName: string;
   authorId: string;
+  authorDepartment?: string;
+  authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
   createdAt: {
     seconds: number;
@@ -29,6 +31,15 @@ const PostItem = ({ post }: { post: Post }) => {
   
   const formattedDate = post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
 
+  const getDesignationDisplay = () => {
+    if (!post.authorDesignation) return null;
+    const designation = post.authorDesignation.replace('_', ' ');
+    if ((post.authorDesignation === 'dean' || post.authorDesignation === 'hod') && post.authorDepartment) {
+      return <p className="text-xs text-muted-foreground capitalize">{designation} of {post.authorDepartment}</p>;
+    }
+    return <p className="text-xs text-muted-foreground capitalize">{designation}</p>;
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-start gap-4 space-y-0">
@@ -37,7 +48,10 @@ const PostItem = ({ post }: { post: Post }) => {
         </Avatar>
         <div className="flex-1">
           <div className="flex items-baseline justify-between">
-            <p className="font-semibold">{post.authorName}</p>
+            <div>
+              <p className="font-semibold">{post.authorName}</p>
+              {getDesignationDisplay()}
+            </div>
             <p className="text-xs text-muted-foreground">{formattedDate}</p>
           </div>
         </div>
