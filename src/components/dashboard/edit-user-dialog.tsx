@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -40,6 +41,7 @@ interface User {
   department: string;
   regno?: string;
   staffId?: string;
+  designation?: 'dean' | 'hod' | 'club_incharge';
 }
 
 interface EditUserDialogProps {
@@ -53,6 +55,7 @@ const formSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   department: z.string().min(1, 'Department is required'),
   role: z.enum(['student', 'faculty', 'admin']),
+  designation: z.enum(['none', 'dean', 'hod', 'club_incharge']).optional(),
   regno: z.string().optional(),
   staffId: z.string().optional(),
 });
@@ -64,6 +67,7 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
       username: user.username,
       department: user.department,
       role: user.role,
+      designation: user.designation || 'none',
       regno: user.regno || '',
       staffId: user.staffId || '',
     },
@@ -76,6 +80,7 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
       username: user.username,
       department: user.department,
       role: user.role,
+      designation: user.designation || 'none',
       regno: user.regno || '',
       staffId: user.staffId || '',
     });
@@ -90,16 +95,22 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
     if (values.role === 'student') {
       dataToSave.regno = values.regno || '';
       dataToSave.staffId = deleteField();
+      dataToSave.designation = deleteField();
     } else {
       dataToSave.staffId = values.staffId || '';
       dataToSave.regno = deleteField();
+      if (values.designation && values.designation !== 'none') {
+        dataToSave.designation = values.designation;
+      } else {
+        dataToSave.designation = deleteField();
+      }
     }
     onSave(dataToSave);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit User: {user.username}</DialogTitle>
           <DialogDescription>
@@ -172,19 +183,44 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
               />
             )}
             {(watchedRole === 'faculty' || watchedRole === 'admin') && (
-              <FormField
-                control={form.control}
-                name="staffId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Staff ID</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="staffId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Staff ID</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="designation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Designation</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || 'none'}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a designation" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="dean">Dean</SelectItem>
+                          <SelectItem value="hod">HOD</SelectItem>
+                          <SelectItem value="club_incharge">Club Incharge</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>

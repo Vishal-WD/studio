@@ -49,6 +49,7 @@ const formSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   department: z.string().min(1, 'Department is required'),
   role: z.enum(['student', 'faculty', 'admin']),
+  designation: z.enum(['none', 'dean', 'hod', 'club_incharge']).optional(),
   regno: z.string().optional(),
   staffId: z.string().optional(),
 }).refine(data => {
@@ -82,6 +83,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
       username: '',
       department: '',
       role: 'student',
+      designation: 'none',
       regno: '',
       staffId: '',
     },
@@ -113,6 +115,9 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
         userData.regno = values.regno;
       } else {
         userData.staffId = values.staffId;
+        if (values.designation && values.designation !== 'none') {
+          userData.designation = values.designation;
+        }
       }
       
       await setDoc(doc(db, 'users', user.uid), userData);
@@ -136,7 +141,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
           <DialogDescription>
@@ -235,19 +240,44 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
               />
             )}
             {(watchedRole === 'faculty' || watchedRole === 'admin') && (
-              <FormField
-                control={form.control}
-                name="staffId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Staff ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="S123..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="staffId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Staff ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="S123..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="designation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Designation (Optional)</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || 'none'}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a designation" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="dean">Dean</SelectItem>
+                          <SelectItem value="hod">HOD</SelectItem>
+                          <SelectItem value="club_incharge">Club Incharge</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -27,6 +28,7 @@ interface User {
   department: string;
   regno?: string;
   staffId?: string;
+  designation?: 'dean' | 'hod' | 'club_incharge';
 }
 
 export default function ManageUsersPage() {
@@ -195,6 +197,7 @@ export default function ManageUsersPage() {
                   <TableHead>Username</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Designation</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>ID (Reg/Staff)</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -209,6 +212,7 @@ export default function ManageUsersPage() {
                       <TableCell>
                         <Badge variant={u.role === 'admin' ? 'destructive' : 'secondary'}>{u.role}</Badge>
                       </TableCell>
+                       <TableCell className="capitalize">{u.designation?.replace('_', ' ') || 'N/A'}</TableCell>
                       <TableCell>{u.department}</TableCell>
                       <TableCell>{u.role === 'student' ? u.regno : u.staffId}</TableCell>
                       <TableCell className="text-right">
@@ -223,7 +227,7 @@ export default function ManageUsersPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">
+                    <TableCell colSpan={7} className="text-center">
                       No users found.
                     </TableCell>
                   </TableRow>
