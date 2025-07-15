@@ -113,6 +113,14 @@ export function DashboardHeader() {
       });
     }
   };
+  
+  const handleClearNotifications = () => {
+    setNotifications([]);
+    toast({
+      title: "Notifications Cleared",
+      description: "Your notification feed is now empty.",
+    });
+  };
 
 
   return (
@@ -164,6 +172,17 @@ export function DashboardHeader() {
                 ))
             ) : (
                 <DropdownMenuItem disabled>No new notifications</DropdownMenuItem>
+            )}
+            {!loadingNotifications && filteredNotifications.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onSelect={(e) => { e.preventDefault(); handleClearNotifications(); }} 
+                  className="flex items-center justify-center text-xs text-muted-foreground cursor-pointer"
+                >
+                  Clear All Notifications
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
