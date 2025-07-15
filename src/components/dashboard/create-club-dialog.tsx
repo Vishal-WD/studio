@@ -38,10 +38,10 @@ interface CreateClubDialogProps {
 const formSchema = z.object({
   name: z.string().min(1, 'Club name is required'),
   description: z.string().min(1, 'Club description is required'),
-  incharge: z.string().min(1, 'Club Incharge is required'),
-  president: z.string().min(1, 'President is required'),
-  vicePresident: z.string().min(1, 'Vice President is required'),
-  secretary: z.string().min(1, 'Secretary is required'),
+  inchargeStaffId: z.string().min(1, 'Club Incharge Staff ID is required'),
+  presidentRegno: z.string().min(1, "President's Reg No. is required"),
+  vicePresidentRegno: z.string().min(1, "Vice President's Reg No. is required"),
+  secretaryRegno: z.string().min(1, "Secretary's Reg No. is required"),
   profilePic: z.instanceof(FileList).optional(),
 });
 
@@ -54,10 +54,10 @@ export function CreateClubDialog({ isOpen, onOpenChange, onClubCreated }: Create
     defaultValues: {
       name: '',
       description: '',
-      incharge: '',
-      president: '',
-      vicePresident: '',
-      secretary: '',
+      inchargeStaffId: '',
+      presidentRegno: '',
+      vicePresidentRegno: '',
+      secretaryRegno: '',
     },
   });
 
@@ -78,10 +78,10 @@ export function CreateClubDialog({ isOpen, onOpenChange, onClubCreated }: Create
         description: values.description,
         profilePicUrl,
         officials: {
-          incharge: values.incharge,
-          president: values.president,
-          vicePresident: values.vicePresident,
-          secretary: values.secretary,
+          inchargeStaffId: values.inchargeStaffId,
+          presidentRegno: values.presidentRegno,
+          vicePresidentRegno: values.vicePresidentRegno,
+          secretaryRegno: values.secretaryRegno,
         },
         createdAt: serverTimestamp(),
       });
@@ -155,12 +155,12 @@ export function CreateClubDialog({ isOpen, onOpenChange, onClubCreated }: Create
             <h3 className="text-lg font-medium border-t pt-4">Club Officials</h3>
             <FormField
               control={form.control}
-              name="incharge"
+              name="inchargeStaffId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Club Incharge (Faculty)</FormLabel>
+                  <FormLabel>Club Incharge (Staff ID)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Faculty member's name" {...field} />
+                    <Input placeholder="Faculty member's Staff ID" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,12 +168,12 @@ export function CreateClubDialog({ isOpen, onOpenChange, onClubCreated }: Create
             />
             <FormField
               control={form.control}
-              name="president"
+              name="presidentRegno"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>President</FormLabel>
+                  <FormLabel>President (Reg No.)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Student's name" {...field} />
+                    <Input placeholder="Student's Registration No." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,12 +181,12 @@ export function CreateClubDialog({ isOpen, onOpenChange, onClubCreated }: Create
             />
              <FormField
               control={form.control}
-              name="vicePresident"
+              name="vicePresidentRegno"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Vice President</FormLabel>
+                  <FormLabel>Vice President (Reg No.)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Student's name" {...field} />
+                    <Input placeholder="Student's Registration No." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -194,12 +194,12 @@ export function CreateClubDialog({ isOpen, onOpenChange, onClubCreated }: Create
             />
              <FormField
               control={form.control}
-              name="secretary"
+              name="secretaryRegno"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Secretary</FormLabel>
+                  <FormLabel>Secretary (Reg No.)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Student's name" {...field} />
+                    <Input placeholder="Student's Registration No." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
