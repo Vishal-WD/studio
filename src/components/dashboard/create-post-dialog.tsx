@@ -36,6 +36,14 @@ export function CreatePostDialog() {
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          variant: "destructive",
+          title: "Image too large",
+          description: "Please select an image smaller than 5MB.",
+        });
+        return;
+      }
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -55,10 +63,12 @@ export function CreatePostDialog() {
   };
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      resetForm();
+    if (!isSubmitting) {
+      if (!isOpen) {
+        resetForm();
+      }
+      setOpen(isOpen);
     }
-    setOpen(isOpen);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -87,24 +97,29 @@ export function CreatePostDialog() {
         const uploadResult = await uploadBytes(storageRef, imageFile);
         imageUrl = await getDownloadURL(uploadResult.ref);
       }
-
-      await addDoc(collection(db, "posts"), {
+      
+      const postData = {
         authorId: user.uid,
         authorName: userData.username,
-        authorDepartment: userData.department,
+        authorDepartment: userData.department || "", // Handle case where dean has no department
         authorDesignation: userData.designation,
         content: content,
         imageUrl: imageUrl,
         imagePath: imagePath,
         createdAt: serverTimestamp(),
-      });
+      };
+
+      await addDoc(collection(db, "posts"), postData);
 
       toast({
         title: "Post created!",
         description: "Your post has been successfully shared.",
       });
+      
+      // Reset state and close dialog, must happen before finally block resets isSubmitting
       resetForm();
-      setOpen(false);
+      setOpen(false); 
+
     } catch (error) {
       console.error("Error creating post:", error);
       toast({
@@ -141,6 +156,7 @@ export function CreatePostDialog() {
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             {imagePreview && (
@@ -158,6 +174,7 @@ export function CreatePostDialog() {
                       fileInputRef.current.value = "";
                     }
                   }}
+                  disabled={isSubmitting}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -183,7 +200,7 @@ export function CreatePostDialog() {
               {imageFile ? "Change Image" : "Add Image"}
             </Button>
             <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || (!content.trim() && !imageFile)}>
               {isSubmitting ? "Posting..." : "Post"}
             </Button>
           </DialogFooter>
