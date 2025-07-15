@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
@@ -70,18 +70,29 @@ export default function PostsPage() {
   const [loadingPosts, setLoadingPosts] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setPosts(postsData);
-      setLoadingPosts(false);
-    }, (error) => {
-      console.error("Error fetching posts:", error);
-      setLoadingPosts(false);
-    });
+    if (userData?.department) {
+      const q = query(
+        collection(db, 'posts'), 
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        setPosts(postsData);
+        setLoadingPosts(false);
+      }, (error) => {
+        console.error("Error fetching posts:", error);
+        // This likely means the required index is not created.
+        setLoadingPosts(false);
+      });
 
-    return () => unsubscribe();
-  }, []);
+      return () => unsubscribe();
+    } else if (!authLoading) {
+      // If we're not loading auth and there's no department, there are no posts to fetch
+      setLoadingPosts(false);
+    }
+  }, [userData, authLoading]);
 
   const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod' || userData?.designation === 'club_incharge';
 
@@ -90,7 +101,7 @@ export default function PostsPage() {
        <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Community Posts</h1>
-          <p className="text-muted-foreground">Catch up on announcements and what's on everyone's mind.</p>
+          <p className="text-muted-foreground">Catch up on announcements and what's on everyone's mind in your department.</p>
         </div>
         {authLoading ? (
             <Skeleton className="h-10 w-32" />
@@ -100,7 +111,7 @@ export default function PostsPage() {
       </div>
     
       <div className="space-y-4">
-        {loadingPosts ? (
+        {loadingPosts || authLoading ? (
           <>
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
@@ -112,7 +123,8 @@ export default function PostsPage() {
           <Card>
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
-                <p>No posts yet. Be the first to share something!</p>
+                <p>No posts found for your department yet.</p>
+                 <p className="text-sm">If you are a HOD, Dean, or Club Incharge, try creating one!</p>
               </div>
             </CardContent>
           </Card>
