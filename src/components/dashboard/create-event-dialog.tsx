@@ -15,7 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Paperclip, X, Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { PlusCircle, Paperclip, X, Loader2, Calendar as CalendarIcon, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
@@ -37,6 +37,7 @@ export function CreateEventDialog() {
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [registrationLink, setRegistrationLink] = useState("");
   const [image, setImage] = useState<{dataUrl: string} | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +105,7 @@ export function CreateEventDialog() {
     setDescription("");
     setLocation("");
     setDate(undefined);
+    setRegistrationLink("");
     removeImage();
   };
 
@@ -144,6 +146,10 @@ export function CreateEventDialog() {
         date: format(date, "yyyy-MM-dd"),
         createdAt: serverTimestamp(),
       };
+
+      if (registrationLink.trim()) {
+        eventData.registrationLink = registrationLink.trim();
+      }
 
       if (image) {
         if (image.dataUrl.length > MAX_BASE64_SIZE_BYTES) {
@@ -255,6 +261,18 @@ export function CreateEventDialog() {
                     </Popover>
                 </div>
             </div>
+
+             <div className="grid w-full items-center gap-1.5">
+              <Label htmlFor="registrationLink">Registration Link (Optional)</Label>
+              <Input
+                id="registrationLink"
+                value={registrationLink}
+                onChange={(e) => setRegistrationLink(e.target.value)}
+                placeholder="https://forms.gle/..."
+                disabled={isSubmitting}
+              />
+            </div>
+
 
             {image && (
               <div className="relative group">
