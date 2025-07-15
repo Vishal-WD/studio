@@ -17,15 +17,19 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Paperclip, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 import Image from "next/image";
+
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_BASE64_SIZE_BYTES = 1048487; // Firestore's 1MB limit for a field
+const COMPRESSION_QUALITY = 0.7; // 70% quality
+const MAX_IMAGE_DIMENSION = 1280; // Max width/height of 1280px
 
 export function CreatePostDialog() {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
-  const [image, setImage] = useState<{dataUrl: string, file: File} | null>(null);
+  const [image, setImage] = useState<{dataUrl: string} | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -34,17 +38,52 @@ export function CreatePostDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({ variant: "destructive", title: "Error", description: "Image file size should not exceed 5MB." });
+      if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+        toast({ variant: "destructive", title: "Error", description: `Image file size should not exceed ${MAX_IMAGE_SIZE_MB}MB.` });
         return;
       }
+
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage({ dataUrl: reader.result as string, file });
+      reader.onload = (e) => {
+        const img = document.createElement("img");
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+
+          // Resize logic
+          if (width > height) {
+            if (width > MAX_IMAGE_DIMENSION) {
+              height *= MAX_IMAGE_DIMENSION / width;
+              width = MAX_IMAGE_DIMENSION;
+            }
+          } else {
+            if (height > MAX_IMAGE_DIMENSION) {
+              width *= MAX_IMAGE_DIMENSION / height;
+              height = MAX_IMAGE_DIMENSION;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL(file.type, COMPRESSION_QUALITY);
+            
+            if (dataUrl.length > MAX_BASE64_SIZE_BYTES) {
+                 toast({ variant: "destructive", title: "Error", description: "After compression, the image is still too large. Please select a smaller file." });
+                 return;
+            }
+
+            setImage({ dataUrl });
+          }
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
   };
+
 
   const removeImage = () => {
     setImage(null);
@@ -86,13 +125,6 @@ export function CreatePostDialog() {
 
     setIsSubmitting(true);
     try {
-      let imageUrl = "";
-      if (image) {
-        const imageRef = ref(storage, `posts/${user.uid}/${Date.now()}-${image.file.name}`);
-        const uploadResult = await uploadString(imageRef, image.dataUrl, 'data_url');
-        imageUrl = await getDownloadURL(uploadResult.ref);
-      }
-
       const postData: any = {
         authorId: user.uid,
         authorName: userData.username,
@@ -100,8 +132,12 @@ export function CreatePostDialog() {
         content: content,
         createdAt: serverTimestamp(),
         authorDepartment: userData.department || "",
-        ...(imageUrl && { imageUrl }),
       };
+
+      if (image) {
+        postData.imageUrl = image.dataUrl;
+      }
+
 
       await addDoc(collection(db, "posts"), postData);
 
@@ -118,7 +154,7 @@ export function CreatePostDialog() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not create post. Please try again.",
+        description: error.message || "Could not create post. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
