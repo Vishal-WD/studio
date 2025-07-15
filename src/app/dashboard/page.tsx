@@ -3,7 +3,6 @@
 import { EventFeed } from "@/components/dashboard/event-feed";
 import { ClubFeed } from "@/components/dashboard/club-feed";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CreatePostDialog } from "@/components/dashboard/create-post-dialog";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardPage() {
@@ -22,11 +21,8 @@ export default function DashboardPage() {
               <CardTitle className="font-headline">
                 {loading ? "Loading..." : `Welcome, ${userData?.username || "User"}!`}
               </CardTitle>
-              <CardDescription>Ready to share something new?</CardDescription>
+              <CardDescription>Here's what's happening on campus today.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <CreatePostDialog />
-            </CardContent>
           </Card>
           
           <Card className="shadow-md">
