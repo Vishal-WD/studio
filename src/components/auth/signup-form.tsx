@@ -24,7 +24,7 @@ const formSchema = z.object({
   username: z.string().min(2, { message: "Username must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }).refine(val => val.endsWith('@klu.ac.in'), { message: "Email must be a @klu.ac.in address." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
-  role: z.enum(["student", "faculty", "club_leader", "admin"]),
+  role: z.enum(["student", "faculty", "admin"]),
   department: z.string().min(1, { message: "Department is required." }),
   staffId: z.string().optional(),
   regno: z.string().optional(),
@@ -55,9 +55,11 @@ export function SignUpForm() {
       username: "",
       email: "",
       password: "",
+      role: undefined,
       department: "",
       staffId: "",
       regno: "",
+      gender: undefined,
     },
   });
 
@@ -140,7 +142,6 @@ export function SignUpForm() {
                       <SelectContent>
                         <SelectItem value="student">Student</SelectItem>
                         <SelectItem value="faculty">Faculty</SelectItem>
-                        <SelectItem value="club_leader">Club Leader</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
