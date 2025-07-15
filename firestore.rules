@@ -1,35 +1,38 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all reads/writes
-    match /{document=**} {
-      allow read, write: if false;
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Users collection rules
+    // Helper function to check if a user is a staff member who can post
+    function isStaff() {
+      let designation = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation;
+      return designation in ['dean', 'hod', 'club_incharge'];
+    }
+
     match /users/{userId} {
-      // Allow admins to perform any action on user documents
-      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-
-      // Allow authenticated users to read their own document
-      allow get: if request.auth.uid == userId;
+      // Admins can read/write any user document.
+      // Users can only read their own document.
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Posts collection rules
     match /posts/{postId} {
-        // Allow authenticated users to read posts from their own department.
-        allow read: if request.auth.uid != null 
-                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.authorDepartment;
+      // Any authenticated user can read any post.
+      allow read: if request.auth != null;
 
-        // Allow authenticated users to create posts.
-        // The client will ensure the correct authorDepartment is set.
-        allow create: if request.auth.uid != null;
+      // Users can create a post if they are staff.
+      allow create: if request.auth != null && isStaff();
 
-        // Allow users to delete their own posts.
-        allow delete: if request.auth.uid == resource.data.authorId;
+      // Users can only delete their own posts.
+      allow delete: if request.auth.uid == resource.data.authorId;
+      
+      // Updating posts is not allowed for now.
+      allow update: if false;
     }
   }
 }
