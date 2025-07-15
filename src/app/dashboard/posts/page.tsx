@@ -89,22 +89,26 @@ export default function PostsPage() {
   }, []);
 
   const filteredPosts = useMemo(() => {
-    if (!userData?.department) return [];
-    // A post is visible if it's for the user's department OR if it's from an admin (who might not have a department).
-    // The rules are now simplified, so we handle more logic here.
-    return allPosts.filter(post => 
-      post.authorDepartment === userData.department || post.authorDesignation === 'dean'
-    );
-  }, [allPosts, userData?.department]);
+    if (!userData?.department && userData?.designation !== 'dean') return [];
+    
+    return allPosts.filter(post => {
+      // Deans see all posts
+      if (userData?.designation === 'dean') return true;
+      // HODs see posts from their own department
+      if (post.authorDepartment === userData?.department) return true;
 
-  const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod' || userData?.designation === 'club_incharge';
+      return false;
+    });
+  }, [allPosts, userData]);
+
+  const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
 
   return (
     <div className="max-w-3xl mx-auto">
        <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Community Posts</h1>
-          <p className="text-muted-foreground">Catch up on announcements and what's on everyone's mind in your department.</p>
+          <p className="text-muted-foreground">Catch up on announcements and what's on everyone's mind.</p>
         </div>
         {authLoading ? (
             <Skeleton className="h-10 w-32" />
@@ -126,8 +130,8 @@ export default function PostsPage() {
           <Card>
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
-                <p>No posts found for your department yet.</p>
-                 <p className="text-sm">If you are a HOD, Dean, or Club Incharge, try creating one!</p>
+                <p>No posts found for you yet.</p>
+                 <p className="text-sm">If you are a HOD or Dean, try creating one!</p>
               </div>
             </CardContent>
           </Card>

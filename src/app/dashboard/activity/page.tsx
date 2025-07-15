@@ -110,7 +110,6 @@ export default function ActivityPage() {
   const handleDeleteConfirm = async () => {
     if (!selectedPost) return;
     try {
-        // Delete post from Firestore
         await deleteDoc(doc(db, 'posts', selectedPost.id));
         
         toast({ title: "Success", description: "Post deleted successfully." });
