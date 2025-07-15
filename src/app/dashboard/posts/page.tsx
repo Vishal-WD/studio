@@ -20,7 +20,6 @@ interface Post {
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
   imageUrl?: string;
-  imagePath?: string;
   createdAt: {
     seconds: number;
     nanoseconds: number;

@@ -3,10 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
-import { ref, deleteObject } from 'firebase/storage';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,7 +23,6 @@ interface Post {
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
   imageUrl?: string;
-  imagePath?: string;
   createdAt: {
     seconds: number;
     nanoseconds: number;
@@ -124,15 +122,7 @@ export default function ActivityPage() {
   const handleDeleteConfirm = async () => {
     if (!selectedPost) return;
     try {
-        // 1. Delete image from storage if it exists
-        if (selectedPost.imagePath) {
-            const imageRef = ref(storage, selectedPost.imagePath);
-            await deleteObject(imageRef);
-        }
-
-        // 2. Delete post document from Firestore
         await deleteDoc(doc(db, 'posts', selectedPost.id));
-        
         toast({ title: "Success", description: "Post deleted successfully." });
     } catch (error: any) {
         console.error("Error deleting post:", error);

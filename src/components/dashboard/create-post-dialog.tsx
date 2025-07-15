@@ -17,16 +17,14 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Image from "next/image";
 
 export function CreatePostDialog() {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -35,19 +33,20 @@ export function CreatePostDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({ variant: "destructive", title: "Error", description: "Image file size should not exceed 5MB." });
+      if (file.size > 1 * 1024 * 1024) { // 1MB limit for Base64
+        toast({ variant: "destructive", title: "Error", description: "Image file size should not exceed 1MB." });
         return;
       }
-      setImageFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
+    setImageBase64(null);
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -87,19 +86,6 @@ export function CreatePostDialog() {
 
     setIsSubmitting(true);
     try {
-      let imageUrl = "";
-      let imagePath = "";
-
-      // 1. Upload image to Firebase Storage if it exists
-      if (imageFile) {
-        const filePath = `posts/${user.uid}/${Date.now()}_${imageFile.name}`;
-        const storageRef = ref(storage, filePath);
-        const uploadResult = await uploadBytes(storageRef, imageFile);
-        imageUrl = await getDownloadURL(uploadResult.ref);
-        imagePath = filePath;
-      }
-
-      // 2. Create post document in Firestore
       const postData: any = {
         authorId: user.uid,
         authorName: userData.username,
@@ -109,9 +95,8 @@ export function CreatePostDialog() {
         authorDepartment: userData.department || "",
       };
 
-      if (imageUrl) {
-        postData.imageUrl = imageUrl;
-        postData.imagePath = imagePath;
+      if (imageBase64) {
+        postData.imageUrl = imageBase64;
       }
 
       await addDoc(collection(db, "posts"), postData);
@@ -129,9 +114,7 @@ export function CreatePostDialog() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.code === 'storage/unauthorized' 
-            ? "You do not have permission to upload files. Please check storage rules."
-            : "Could not create post. Please try again.",
+        description: "Could not create post. The data might be too large.",
       });
     } finally {
       setIsSubmitting(false);
@@ -167,10 +150,10 @@ export function CreatePostDialog() {
               />
             </div>
 
-            {imagePreview && (
+            {imageBase64 && (
               <div className="relative group">
                 <Image 
-                    src={imagePreview} 
+                    src={imageBase64} 
                     alt="Image preview" 
                     width={500}
                     height={300}
