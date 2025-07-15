@@ -1,14 +1,5 @@
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 
 interface DeletePostDialogProps {
   isOpen: boolean;
@@ -18,21 +9,11 @@ interface DeletePostDialogProps {
 
 export function DeletePostDialog({ isOpen, onOpenChange, onConfirm }: DeletePostDialogProps) {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete this post from our servers.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive hover:bg-destructive/90">
-            Yes, delete post
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <DeleteConfirmationDialog 
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onConfirm={onConfirm}
+        itemType="post"
+    />
   )
 }
