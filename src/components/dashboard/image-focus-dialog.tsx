@@ -4,6 +4,8 @@
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 
@@ -17,6 +19,9 @@ export function ImageFocusDialog({ isOpen, onOpenChange, imageUrl }: ImageFocusD
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-auto p-2 bg-transparent border-0">
+        <DialogHeader className="sr-only">
+            <DialogTitle>Focused Image</DialogTitle>
+        </DialogHeader>
         {imageUrl && (
             <div className="relative w-full h-[80vh]">
                 <Image
