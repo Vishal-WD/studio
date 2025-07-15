@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { deleteField } from 'firebase/firestore';
 
 interface User {
   id: string;
@@ -81,17 +82,17 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
   }, [user, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const dataToSave: Partial<User> = {
+    const dataToSave: any = {
       username: values.username,
       department: values.department,
       role: values.role,
     };
     if (values.role === 'student') {
-      dataToSave.regno = values.regno;
-      dataToSave.staffId = undefined;
+      dataToSave.regno = values.regno || '';
+      dataToSave.staffId = deleteField();
     } else {
-      dataToSave.staffId = values.staffId;
-      dataToSave.regno = undefined;
+      dataToSave.staffId = values.staffId || '';
+      dataToSave.regno = deleteField();
     }
     onSave(dataToSave);
   };
