@@ -14,6 +14,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DeleteUserDialog } from '@/components/dashboard/delete-user-dialog';
 import { EditUserDialog } from '@/components/dashboard/edit-user-dialog';
+import { CreateUserDialog } from '@/components/dashboard/create-user-dialog';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface User {
   id: string;
@@ -29,6 +32,7 @@ interface User {
 export default function ManageUsersPage() {
   const { user, userData, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +40,7 @@ export default function ManageUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -58,6 +63,7 @@ export default function ManageUsersPage() {
         setUsers(usersList);
       } catch (error) {
         console.error("Error fetching users: ", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not fetch user data." });
       } finally {
         setLoading(false);
       }
@@ -100,9 +106,11 @@ export default function ManageUsersPage() {
         const userDocRef = doc(db, 'users', selectedUser.uid);
         await updateDoc(userDocRef, updatedData);
         setEditDialogOpen(false);
+        toast({ title: "Success", description: "User updated successfully." });
         fetchUsers(); // Refresh the user list
     } catch (error) {
         console.error("Error updating user:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not update user." });
     }
   };
 
@@ -114,10 +122,18 @@ export default function ManageUsersPage() {
       const userDocRef = doc(db, 'users', selectedUser.uid);
       await deleteDoc(userDocRef);
       setDeleteDialogOpen(false);
+      toast({ title: "Success", description: `User ${selectedUser.username} deleted.` });
       fetchUsers(); // Refresh the user list
     } catch (error) {
       console.error("Error deleting user:", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not delete user." });
     }
+  };
+  
+  const handleUserCreate = () => {
+    setCreateDialogOpen(false);
+    toast({ title: "Success", description: "User created successfully." });
+    fetchUsers(); // Refresh the user list
   };
 
   if (authLoading || (loading && users.length === 0)) {
@@ -151,7 +167,7 @@ export default function ManageUsersPage() {
           <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
           <p className="text-muted-foreground">Create, view, edit, and delete user accounts.</p>
         </div>
-        <Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <PlusCircle className="mr-2" />
           Create User
         </Button>
@@ -218,6 +234,13 @@ export default function ManageUsersPage() {
         </CardContent>
       </Card>
     </div>
+    
+    <CreateUserDialog 
+      isOpen={isCreateDialogOpen}
+      onOpenChange={setCreateDialogOpen}
+      onUserCreated={handleUserCreate}
+    />
+    
     {selectedUser && (
       <>
         <EditUserDialog 
