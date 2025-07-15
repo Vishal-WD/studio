@@ -1,7 +1,16 @@
+
+'use client';
+
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PostsPage() {
+  const { userData, loading } = useAuth();
+
+  const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
+
   return (
     <div className="max-w-7xl mx-auto">
        <div className="flex items-center justify-between mb-6">
@@ -9,7 +18,11 @@ export default function PostsPage() {
           <h1 className="text-3xl font-headline font-bold">Community Posts</h1>
           <p className="text-muted-foreground">Catch up on announcements and what's on everyone's mind.</p>
         </div>
-        <CreatePostDialog />
+        {loading ? (
+            <Skeleton className="h-10 w-32" />
+        ) : (
+            canCreatePost && <CreatePostDialog />
+        )}
       </div>
     
       <Card>
