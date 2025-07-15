@@ -71,7 +71,7 @@ export function CreatePostDialog() {
             const dataUrl = canvas.toDataURL(file.type, COMPRESSION_QUALITY);
             
             if (dataUrl.length > MAX_BASE64_SIZE_BYTES) {
-                 toast({ variant: "destructive", title: "Error", description: "After compression, the image is still too large. Please select a smaller file." });
+                 toast({ variant: "destructive", title: "Error", description: "After compression, the image is still too large. Please select a smaller or less complex file." });
                  return;
             }
 
@@ -135,6 +135,11 @@ export function CreatePostDialog() {
       };
 
       if (image) {
+        if (image.dataUrl.length > MAX_BASE64_SIZE_BYTES) {
+            toast({ variant: "destructive", title: "Upload Error", description: "The selected image is too large to save. Please choose a smaller file." });
+            setIsSubmitting(false);
+            return;
+        }
         postData.imageUrl = image.dataUrl;
       }
 
