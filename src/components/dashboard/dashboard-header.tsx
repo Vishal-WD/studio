@@ -66,10 +66,15 @@ export function DashboardHeader() {
 
 
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-        const postsData = snapshot.docs.map(doc => ({ id: doc.id, type: 'post', ...doc.data() } as Notification));
+        const postsData = snapshot.docs
+          .map(doc => ({ id: doc.id, type: 'post', ...doc.data() } as Notification))
+          .filter(post => post.createdAt); // Ensure createdAt exists
         setNotifications(prev => {
             const otherNotifications = prev.filter(n => n.type !== 'post');
-            const all = [...otherNotifications, ...postsData].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
+            const all = [...otherNotifications, ...postsData].sort((a,b) => {
+                if (!a.createdAt || !b.createdAt) return 0;
+                return b.createdAt.seconds - a.createdAt.seconds;
+            });
             return all;
         });
         setLoadingNotifications(false);
@@ -79,10 +84,15 @@ export function DashboardHeader() {
     });
 
     const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
-        const eventsData = snapshot.docs.map(doc => ({ id: doc.id, type: 'event', ...doc.data() } as Notification));
+        const eventsData = snapshot.docs
+          .map(doc => ({ id: doc.id, type: 'event', ...doc.data() } as Notification))
+          .filter(event => event.createdAt); // Ensure createdAt exists
         setNotifications(prev => {
             const otherNotifications = prev.filter(n => n.type !== 'event');
-            const all = [...otherNotifications, ...eventsData].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
+            const all = [...otherNotifications, ...eventsData].sort((a,b) => {
+              if (!a.createdAt || !b.createdAt) return 0;
+              return b.createdAt.seconds - a.createdAt.seconds
+            });
             return all;
         });
         setLoadingNotifications(false);
@@ -102,11 +112,15 @@ export function DashboardHeader() {
     if (authLoading || !userData) return [];
     
     return notifications.filter(notification => {
+        if (!notification.createdAt) return false; // Extra safety filter
+
         if (notification.type === 'event') {
             return true; // Everyone sees event notifications
         }
         if (notification.type === 'post') {
+            // Dean sees all posts
             if (userData.designation === 'dean') return true;
+            // Admins, faculty, students see posts from their own department
             if (userData.department) {
                 return notification.authorDepartment === userData.department;
             }
