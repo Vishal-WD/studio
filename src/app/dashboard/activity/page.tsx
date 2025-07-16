@@ -21,7 +21,7 @@ type PostActivity = PostType & { type: 'post' };
 type EventActivity = EventType & { type: 'event' };
 type Activity = PostActivity | EventActivity;
 
-const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, onDelete: (activity: Activity) => void, onImageClick: (imageUrl: string) => void }) => {
+const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, onDelete: (eventId: string) => void, onImageClick: (imageUrl: string) => void }) => {
     const formattedDate = event.createdAt ? formatDistanceToNow(new Date(event.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
   
     return (
@@ -46,7 +46,7 @@ const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, on
             </div>
              <div className="flex items-center gap-2">
                 <p className="text-xs text-muted-foreground">{formattedDate}</p>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(event)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(event.id)}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
@@ -63,8 +63,10 @@ export default function ActivityPage() {
   const { user, userData, loading: authLoading } = useAuth();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  
+  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'post' | 'event'} | null>(null);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   const { toast } = useToast();
   
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
@@ -76,7 +78,6 @@ export default function ActivityPage() {
       const postsQuery = query(
         collection(db, 'posts'), 
         where('authorId', '==', user.uid),
-        where('authorDepartment', '==', userData.department)
       );
       const eventsQuery = query(
         collection(db, 'events'), 
@@ -113,8 +114,8 @@ export default function ActivityPage() {
     }
   }, [user, userData, authLoading]);
   
-  const handleDeleteClick = (activity: Activity) => {
-    setSelectedActivity(activity);
+  const handleDeleteClick = (id: string, type: 'post' | 'event') => {
+    setItemToDelete({ id, type });
     setDeleteDialogOpen(true);
   };
 
@@ -123,17 +124,20 @@ export default function ActivityPage() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!selectedActivity) return;
-    const collectionName = selectedActivity.type === 'post' ? 'posts' : 'events';
+    if (!itemToDelete) return;
+
+    const { id, type } = itemToDelete;
+    const collectionName = type === 'post' ? 'posts' : 'events';
+
     try {
-        await deleteDoc(doc(db, collectionName, selectedActivity.id));
-        toast({ title: "Success", description: `${selectedActivity.type === 'post' ? 'Post' : 'Event'} deleted successfully.` });
+        await deleteDoc(doc(db, collectionName, id));
+        toast({ title: "Success", description: `${type === 'post' ? 'Post' : 'Event'} deleted successfully.` });
     } catch (error: any) {
-        console.error(`Error deleting ${selectedActivity.type}:`, error);
-        toast({ variant: "destructive", title: "Error", description: `Could not delete ${selectedActivity.type}.` });
+        console.error(`Error deleting ${type}:`, error);
+        toast({ variant: "destructive", title: "Error", description: `Could not delete ${type}.` });
     } finally {
         setDeleteDialogOpen(false);
-        setSelectedActivity(null);
+        setItemToDelete(null);
     }
   };
 
@@ -158,14 +162,14 @@ export default function ActivityPage() {
             if (activity.type === 'post') {
                 return (
                     <PostItem key={`post-${activity.id}`} post={activity} onImageClick={handleImageClick}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteClick(activity); }}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteClick(activity.id, 'post'); }}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </PostItem>
                 )
             }
             if (activity.type === 'event') {
-                return <EventItem key={`event-${activity.id}`} event={activity} onDelete={handleDeleteClick} onImageClick={handleImageClick} />
+                return <EventItem key={`event-${activity.id}`} event={activity} onDelete={(id) => handleDeleteClick(id, 'event')} onImageClick={handleImageClick} />
             }
             return null;
           })
@@ -185,7 +189,7 @@ export default function ActivityPage() {
         isOpen={isDeleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
-        itemType={selectedActivity?.type}
+        itemType={itemToDelete?.type}
     />
     
     <ImageFocusDialog
