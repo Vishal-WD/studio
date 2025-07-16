@@ -28,12 +28,12 @@ export function LatestPostsFeed() {
 
     const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
 
-    let unsubscribe: () => void = () => {};
-    let unsubAdmin: () => void = () => {};
+    let unsubscribeDept: () => void = () => {};
+    let unsubscribeAdmin: () => void = () => {};
 
     if (userData.role === 'admin') {
       const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10));
-      unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+      unsubscribeDept = onSnapshot(postsQuery, (snapshot) => {
         const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
         setPosts(postsData);
         setLoading(false);
@@ -42,45 +42,53 @@ export function LatestPostsFeed() {
         setLoading(false);
       });
     } else if (isPrivileged) {
+      // Query 1: Posts from the user's department
       const departmentPostsQuery = query(
         collection(db, 'posts'),
         where('authorDepartment', '==', userData.department)
       );
+      
+      // Query 2: Posts from admins
       const adminPostsQuery = query(
         collection(db, 'posts'),
         where('authorRole', '==', 'admin')
       );
       
-      unsubscribe = onSnapshot(departmentPostsQuery, (deptSnapshot) => {
+      unsubscribeDept = onSnapshot(departmentPostsQuery, (deptSnapshot) => {
         const deptPosts = deptSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-        unsubAdmin = onSnapshot(adminPostsQuery, (adminSnapshot) => {
+        
+        // Nest the second snapshot listener
+        unsubscribeAdmin = onSnapshot(adminPostsQuery, (adminSnapshot) => {
           const adminPosts = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
           
           const combined = [...deptPosts, ...adminPosts];
+          // Remove duplicates (in case an admin is in the same department)
           const uniquePosts = Array.from(new Map(combined.map(p => [p.id, p])).values());
           
+          // Sort client-side
           uniquePosts.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
           
-          setPosts(uniquePosts.slice(0, 5));
+          setPosts(uniquePosts.slice(0, 5)); // Apply limit after combining and sorting
           setLoading(false);
         }, (error) => {
           console.error("Privileged admin post fetch error:", error);
-          // Don't set loading to false here, dept query might still be running
+          setLoading(false); // Error on second query
         });
       }, (error) => {
         console.error("Privileged department post fetch error:", error);
-        setLoading(false);
+        setLoading(false); // Error on first query
       });
 
     } else if (userData.department) {
+       // Regular users see non-admin posts from their department
        const postsQuery = query(
         collection(db, 'posts'),
         where('authorDepartment', '==', userData.department),
         where('authorRole', '!=', 'admin')
       );
-       unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+       unsubscribeDept = onSnapshot(postsQuery, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData.slice(0, 5));
         setLoading(false);
        }, (error) => {
@@ -93,8 +101,8 @@ export function LatestPostsFeed() {
     }
     
     return () => {
-        unsubscribe();
-        unsubAdmin();
+        unsubscribeDept();
+        unsubscribeAdmin();
     };
     
   }, [userData, authLoading]);

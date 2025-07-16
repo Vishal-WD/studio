@@ -42,10 +42,12 @@ export default function PostsPage() {
       });
 
     } else if (isPrivileged) {
+      // Query 1: Posts from the user's department
       const departmentPostsQuery = query(
         collection(db, 'posts'), 
         where('authorDepartment', '==', userData.department)
       );
+      // Query 2: Posts from admins
       const adminPostsQuery = query(
         collection(db, 'posts'),
         where('authorRole', '==', 'admin')
@@ -64,13 +66,17 @@ export default function PostsPage() {
           
           setPosts(uniquePosts);
           setLoadingPosts(false);
+        }, (error) => {
+          console.error("Error fetching posts for privileged user (admin portion):", error);
+          setLoadingPosts(false);
         });
       }, (error) => {
-        console.error("Error fetching posts for privileged user:", error);
+        console.error("Error fetching posts for privileged user (dept portion):", error);
         setLoadingPosts(false);
       });
 
     } else if (userData.department) {
+       // Regular users see non-admin posts from their department
       const postsQuery = query(
           collection(db, 'posts'), 
           where('authorDepartment', '==', userData.department),
@@ -78,7 +84,7 @@ export default function PostsPage() {
       );
       unsubscribePosts = onSnapshot(postsQuery, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData);
         setLoadingPosts(false);
       }, (error) => {
