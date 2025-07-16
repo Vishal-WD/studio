@@ -14,14 +14,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { db, storage } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Loader2, FileUp, X } from 'lucide-react';
 import type { Resource, ResourceType } from '@/app/dashboard/resources/page';
 
@@ -31,14 +29,22 @@ interface ResourceUploadDialogProps {
   existingResource?: Resource | null;
 }
 
+const MAX_FILE_SIZE_MB = 0.9; // ~900KB to be safe with Base64 encoding overhead
+const MAX_BASE64_SIZE_BYTES = 1048487; // Firestore's 1MB limit for a field
+
 const formSchema = z.object({
   type: z.enum(['academic_calendar', 'exam_schedule']),
-  file: z.instanceof(File).optional(),
 });
+
+interface FileAttachment {
+    dataUrl: string;
+    name: string;
+    type: string;
+}
 
 export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }: ResourceUploadDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [attachment, setAttachment] = useState<FileAttachment | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, userData } = useAuth();
@@ -54,12 +60,8 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
   
   useEffect(() => {
     if (isOpen) {
-        if (existingResource) {
-          form.reset({ type: existingResource.type });
-        } else {
-          form.reset({ type: 'academic_calendar' });
-        }
-        setSelectedFile(null);
+        form.reset({ type: existingResource?.type || 'academic_calendar' });
+        setAttachment(null);
         if(fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [existingResource, form, isOpen]);
@@ -67,89 +69,70 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // You might want to add file size validation here
-      setSelectedFile(file);
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        toast({ variant: 'destructive', title: 'Error', description: `File size must be less than ${MAX_FILE_SIZE_MB}MB.` });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        if (dataUrl.length > MAX_BASE64_SIZE_BYTES) {
+          toast({ variant: 'destructive', title: 'Error', description: 'File is too large after encoding. Please select a smaller file.' });
+          return;
+        }
+        setAttachment({ dataUrl, name: file.name, type: file.type });
+      };
+      reader.onerror = () => {
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to read the file.' });
+      };
+      reader.readAsDataURL(file);
     }
   };
   
   const removeFile = () => {
-    setSelectedFile(null);
+    setAttachment(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!isEditing && !selectedFile) {
+    if (!isEditing && !attachment) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please select a file to upload.' });
         return;
     }
-    if (!user) {
+    if (!user || !userData) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
       return;
+    }
+    const canManage = userData.designation === 'hod' || userData.designation === 'dean';
+    if (!canManage) {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to upload resources.' });
+        return;
     }
 
     setIsSubmitting(true);
     
     try {
-        // Server-side security check before upload
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (!userDocSnap.exists()) {
-            throw new Error("User data not found.");
-        }
-
-        const serverUserData = userDocSnap.data();
-        const canManage = serverUserData.designation === 'hod' || serverUserData.designation === 'dean';
-        const department = serverUserData.department;
-
-        if (!canManage || !department) {
-             throw new Error("You do not have permission to upload resources.");
-        }
-
-        let fileUrl = existingResource?.fileUrl || '';
-        let filePath = existingResource?.filePath || '';
-        let fileName = existingResource?.fileName || '';
-
-        // If a new file is selected, upload it
-        if (selectedFile) {
-            // If editing, delete old file from storage first
-            if (isEditing && existingResource.filePath) {
-                const oldFileRef = ref(storage, existingResource.filePath);
-                try {
-                    await deleteObject(oldFileRef);
-                } catch (error: any) {
-                    // Ignore "object not found" errors, as it might have been deleted already
-                    if (error.code !== 'storage/object-not-found') {
-                        console.warn("Could not delete old file, it may not exist:", error);
-                    }
-                }
-            }
-
-            filePath = `resources/${department}/${values.type}/${Date.now()}_${selectedFile.name}`;
-            const fileRef = ref(storage, filePath);
-            const uploadResult = await uploadBytes(fileRef, selectedFile);
-            fileUrl = await getDownloadURL(uploadResult.ref);
-            fileName = selectedFile.name;
-        }
-
         const resourceData: any = {
-            fileName,
-            fileUrl,
-            filePath,
             type: values.type,
-            department: department,
+            department: userData.department,
             authorId: user.uid,
-            authorName: serverUserData.username,
-            createdAt: existingResource?.createdAt ? existingResource.createdAt : serverTimestamp(),
+            authorName: userData.username,
             updatedAt: serverTimestamp(),
         };
+
+        if (attachment) {
+            resourceData.fileName = attachment.name;
+            resourceData.fileUrl = attachment.dataUrl;
+            resourceData.fileType = attachment.type;
+        }
 
         if (isEditing && existingResource) {
             await updateDoc(doc(db, 'resources', existingResource.id), resourceData);
             toast({ title: 'Success', description: 'Resource updated successfully.' });
         } else {
+            resourceData.createdAt = serverTimestamp();
             await addDoc(collection(db, 'resources'), resourceData);
             toast({ title: 'Success', description: 'Resource uploaded successfully.' });
         }
@@ -203,14 +186,15 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
               <div className="text-center">
                 <FileUp className="w-10 h-10 mx-auto text-muted-foreground" />
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {selectedFile ? 'File selected. Click to change.' : (isEditing ? 'Click to replace file' : 'Click to select a file')}
+                  {attachment ? 'File selected. Click to change.' : (isEditing ? 'Click to replace file' : 'Click to select a file')}
                 </p>
+                 <p className="text-xs text-muted-foreground/80 mt-1">Max file size: {MAX_FILE_SIZE_MB}MB</p>
               </div>
             </div>
              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} disabled={isSubmitting}/>
-             {selectedFile ? (
+             {attachment ? (
                 <div className="flex items-center justify-between p-2 text-sm border rounded-md">
-                    <span className="truncate">{selectedFile.name}</span>
+                    <span className="truncate">{attachment.name}</span>
                     <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile} disabled={isSubmitting}>
                         <X className="h-4 w-4" />
                     </Button>

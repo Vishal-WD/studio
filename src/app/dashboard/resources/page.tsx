@@ -2,9 +2,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,8 +20,8 @@ export type ResourceType = 'academic_calendar' | 'exam_schedule';
 export interface Resource {
   id: string;
   fileName: string;
-  fileUrl: string;
-  filePath: string;
+  fileUrl: string; // This will be a Base64 data URI
+  fileType: string;
   type: ResourceType;
   department: string;
   authorId: string;
@@ -69,8 +68,7 @@ const ResourceList = ({
           <div>
             <a 
               href={resource.fileUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
+              download={resource.fileName}
               className="font-medium hover:underline"
             >
               {resource.fileName}
@@ -81,7 +79,7 @@ const ResourceList = ({
           </div>
           <div className="flex items-center gap-2">
              <Button variant="outline" size="sm" asChild>
-              <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
+              <a href={resource.fileUrl} download={resource.fileName}>
                 <Download className="mr-2 h-4 w-4" /> Download
               </a>
             </Button>
@@ -116,6 +114,7 @@ export default function ResourcesPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (authLoading) return;
     if (!userData?.department) {
         setLoading(false);
         return;
@@ -133,11 +132,12 @@ export default function ResourcesPage() {
       setLoading(false);
     }, (error) => {
       console.error("Error fetching resources:", error);
+      toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch resources. You may need to have an index created in Firestore."})
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [userData]);
+  }, [userData, authLoading, toast]);
 
   const canManage = useMemo(() => {
     return userData?.designation === 'hod' || userData?.designation === 'dean';
@@ -162,13 +162,9 @@ export default function ResourcesPage() {
     if (!deletingResource) return;
 
     try {
-        // Delete Firestore document
+        // Only delete Firestore document
         await deleteDoc(doc(db, 'resources', deletingResource.id));
         
-        // Delete file from Storage
-        const fileRef = ref(storage, deletingResource.filePath);
-        await deleteObject(fileRef);
-
         toast({ title: 'Success', description: 'Resource deleted successfully.' });
     } catch (error) {
         console.error("Error deleting resource:", error);
