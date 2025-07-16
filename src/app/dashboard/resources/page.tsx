@@ -9,11 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Download, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Download, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { ResourceUploadDialog } from '@/components/dashboard/resource-upload-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirmation-dialog';
+import Link from 'next/link';
 
 export type ResourceType = 'academic_calendar' | 'exam_schedule';
 
@@ -181,8 +182,8 @@ export default function ResourcesPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-headline font-bold">Department Resources</h1>
-          <p className="text-muted-foreground">Find important documents like calendars and schedules.</p>
+          <h1 className="text-3xl font-headline font-bold">Resources</h1>
+          <p className="text-muted-foreground">Find important documents and quick links.</p>
         </div>
         {canManage && (
           <Button onClick={handleAddClick}>
@@ -191,6 +192,23 @@ export default function ResourcesPage() {
           </Button>
         )}
       </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+            <CardTitle className="text-lg">Quick Links</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <Link 
+                href="https://sis.kalasalingam.ac.in/login" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center justify-between p-4 -m-4 rounded-lg hover:bg-muted transition-colors"
+            >
+                <p className="font-medium">SIS LOGIN</p>
+                <ExternalLink className="h-5 w-5 text-muted-foreground" />
+            </Link>
+        </CardContent>
+      </Card>
       
       <Tabs defaultValue="academic_calendar">
         <TabsList className="grid w-full grid-cols-2">
