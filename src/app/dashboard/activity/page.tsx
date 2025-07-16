@@ -60,7 +60,7 @@ const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, on
 
 
 export default function ActivityPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
@@ -70,12 +70,13 @@ export default function ActivityPage() {
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
+    if (user && userData) {
       setLoading(true);
       
       const postsQuery = query(
         collection(db, 'posts'), 
-        where('authorId', '==', user.uid)
+        where('authorId', '==', user.uid),
+        where('authorDepartment', '==', userData.department)
       );
       const eventsQuery = query(
         collection(db, 'events'), 
@@ -110,7 +111,7 @@ export default function ActivityPage() {
     } else if (!authLoading) {
       setLoading(false);
     }
-  }, [user, authLoading]);
+  }, [user, userData, authLoading]);
   
   const handleDeleteClick = (activity: Activity) => {
     setSelectedActivity(activity);
