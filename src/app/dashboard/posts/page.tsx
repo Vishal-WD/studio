@@ -25,37 +25,31 @@ export default function PostsPage() {
     };
 
     setLoadingPosts(true);
-    let postsQuery;
-    const postsCollection = collection(db, 'posts');
+    
+    // Users should only see posts from their own department.
+    if (userData.department) {
+        const postsQuery = query(
+            collection(db, 'posts'), 
+            where('authorDepartment', '==', userData.department),
+            orderBy('createdAt', 'desc')
+        );
+        
+        const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+          const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+          setPosts(postsData);
+          setLoadingPosts(false);
+        }, (error) => {
+          console.error("Error fetching posts:", error);
+          setLoadingPosts(false);
+        });
 
-    // Dean sees all posts
-    if (userData.designation === 'dean') {
-      postsQuery = query(postsCollection, orderBy('createdAt', 'desc'));
-    } 
-    // Others see posts from their department
-    else if (userData.department) {
-      postsQuery = query(
-        postsCollection, 
-        where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc')
-      );
+        return () => unsubscribe();
     } else {
-      // No department, no posts
+      // If user has no department, they see no posts.
       setPosts([]);
       setLoadingPosts(false);
-      return;
     }
-    
-    const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-      const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setPosts(postsData);
-      setLoadingPosts(false);
-    }, (error) => {
-      console.error("Error fetching posts:", error);
-      setLoadingPosts(false);
-    });
 
-    return () => unsubscribe();
   }, [userData, authLoading]);
 
   const handleImageClick = (imageUrl: string) => {
@@ -92,7 +86,7 @@ export default function PostsPage() {
           <Card>
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
-                <p>No posts found for you yet.</p>
+                <p>No posts found for your department yet.</p>
                  <p className="text-sm">If you are a HOD or Dean, try creating one!</p>
               </div>
             </CardContent>

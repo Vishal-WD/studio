@@ -26,38 +26,32 @@ export function LatestPostsFeed() {
     }
     setLoading(true);
 
-    let postsQuery;
-    const postsCollection = collection(db, 'posts');
-
-    if (userData.designation === 'dean') {
-      postsQuery = query(
-        postsCollection,
-        orderBy('createdAt', 'desc'),
-        limit(5)
-      );
-    } else if (userData.department) {
-      postsQuery = query(
-        postsCollection,
+    // Users should only see posts from their own department.
+    if (userData.department) {
+      const postsQuery = query(
+        collection(db, 'posts'),
         where('authorDepartment', '==', userData.department),
         orderBy('createdAt', 'desc'),
         limit(5)
       );
+
+      const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        setPosts(postsData);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching latest posts:", error);
+        setLoading(false);
+      });
+  
+      return () => unsubscribe();
+
     } else {
+      // If user has no department, they see no posts.
       setPosts([]);
       setLoading(false);
-      return;
     }
     
-    const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-      const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setPosts(postsData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching latest posts:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
   }, [userData, authLoading]);
   
   const handleImageClick = (imageUrl: string) => {
