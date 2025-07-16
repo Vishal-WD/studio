@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
@@ -22,6 +23,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Loader2, FileUp, X } from 'lucide-react';
 import type { Resource, ResourceType } from '@/app/dashboard/resources/page';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 
 interface ResourceUploadDialogProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ const MAX_BASE64_SIZE_BYTES = 1048487; // Firestore's 1MB limit for a field
 
 const formSchema = z.object({
   type: z.enum(['academic_calendar', 'exam_schedule']),
+  fileName: z.string().min(1, 'File name is required.'),
 });
 
 interface FileAttachment {
@@ -54,13 +57,17 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: existingResource?.type || 'academic_calendar',
+      type: 'academic_calendar',
+      fileName: '',
     },
   });
   
   useEffect(() => {
     if (isOpen) {
-        form.reset({ type: existingResource?.type || 'academic_calendar' });
+        form.reset({ 
+            type: existingResource?.type || 'academic_calendar',
+            fileName: existingResource?.fileName || '',
+        });
         setAttachment(null);
         if(fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -73,6 +80,8 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
         toast({ variant: 'destructive', title: 'Error', description: `File size must be less than ${MAX_FILE_SIZE_MB}MB.` });
         return;
       }
+      form.setValue('fileName', file.name, { shouldValidate: true });
+
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
@@ -91,6 +100,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
   
   const removeFile = () => {
     setAttachment(null);
+    form.setValue('fileName', existingResource?.fileName || ''); // Reset to original or empty
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -116,6 +126,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
     try {
         const resourceData: any = {
             type: values.type,
+            fileName: values.fileName,
             department: userData.department,
             authorId: user.uid,
             authorName: userData.username,
@@ -123,7 +134,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
         };
 
         if (attachment) {
-            resourceData.fileName = attachment.name;
+            // Only update file details if a new file is attached
             resourceData.fileUrl = attachment.dataUrl;
             resourceData.fileType = attachment.type;
         }
@@ -156,68 +167,87 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
             {isEditing ? 'Update the resource type or replace the file.' : 'Select a file and choose its type to upload.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          
-          <Controller
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <div className="space-y-2">
-                <Label>Resource Type</Label>
-                <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a resource type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="academic_calendar">Academic Calendar</SelectItem>
-                    <SelectItem value="exam_schedule">Exam Schedule</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          />
-          
-          <div className="space-y-2">
-            <Label>File</Label>
-            <div 
-              className="flex items-center justify-center w-full p-4 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="text-center">
-                <FileUp className="w-10 h-10 mx-auto text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {attachment ? 'File selected. Click to change.' : (isEditing ? 'Click to replace file' : 'Click to select a file')}
-                </p>
-                 <p className="text-xs text-muted-foreground/80 mt-1">Max file size: {MAX_FILE_SIZE_MB}MB</p>
-              </div>
-            </div>
-             <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} disabled={isSubmitting}/>
-             {attachment ? (
-                <div className="flex items-center justify-between p-2 text-sm border rounded-md">
-                    <span className="truncate">{attachment.name}</span>
-                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile} disabled={isSubmitting}>
-                        <X className="h-4 w-4" />
-                    </Button>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            
+            <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                <FormItem>
+                    <Label>Resource Type</Label>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a resource type" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="academic_calendar">Academic Calendar</SelectItem>
+                            <SelectItem value="exam_schedule">Exam Schedule</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="fileName"
+                render={({ field }) => (
+                    <FormItem>
+                        <Label>File Name</Label>
+                        <FormControl>
+                            <Input placeholder="e.g., Spring 2024 Calendar" {...field} disabled={isSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            
+            <div className="space-y-2">
+                <Label>File {isEditing && '(Optional, to replace)'}</Label>
+                <div 
+                className="flex items-center justify-center w-full p-4 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted"
+                onClick={() => !isSubmitting && fileInputRef.current?.click()}
+                >
+                <div className="text-center">
+                    <FileUp className="w-10 h-10 mx-auto text-muted-foreground" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                    {attachment ? 'File selected. Click to change.' : (isEditing ? 'Click to replace file' : 'Click to select a file')}
+                    </p>
+                    <p className="text-xs text-muted-foreground/80 mt-1">Max file size: {MAX_FILE_SIZE_MB}MB</p>
                 </div>
-             ) : (
-                isEditing && <p className="text-sm text-muted-foreground">Current file: {existingResource.fileName}</p>
-             )}
-          </div>
-          
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditing ? 'Saving...' : 'Uploading...'}
-                </>
-              ) : (isEditing ? 'Save Changes' : 'Upload')}
-            </Button>
-          </DialogFooter>
-        </form>
+                </div>
+                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} disabled={isSubmitting}/>
+                {attachment ? (
+                    <div className="flex items-center justify-between p-2 text-sm border rounded-md">
+                        <span className="truncate">{attachment.name}</span>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile} disabled={isSubmitting}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ) : (
+                    isEditing && <p className="text-sm text-muted-foreground">Current file: {existingResource.fileName}</p>
+                )}
+            </div>
+            
+            <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                    <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isEditing ? 'Saving...' : 'Uploading...'}
+                    </>
+                ) : (isEditing ? 'Save Changes' : 'Upload')}
+                </Button>
+            </DialogFooter>
+            </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
