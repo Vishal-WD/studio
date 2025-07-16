@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -10,19 +9,11 @@ service cloud.firestore {
     }
     
     match /posts/{postId} {
-      // Allow read if user is an admin OR...
-      // the post is an admin post and the user is a Dean/HOD OR...
-      // the post is from the user's department.
-      allow read: if request.auth != null && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (resource.data.authorRole == 'admin' && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']) ||
-          (resource.data.authorDepartment == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department)
-        );
-      
-      // Allow create if user is an Admin, Dean, or HOD, and they are the author.
+      allow read: if request.auth != null 
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.authorDepartment;
+
       allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']);
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod'];
 
       allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }

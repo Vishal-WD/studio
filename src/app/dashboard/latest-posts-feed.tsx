@@ -26,84 +26,47 @@ export function LatestPostsFeed() {
     }
     setLoading(true);
 
-    const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
+    // Users should only see posts from their own department.
+    if (userData.department) {
+      const postsQuery = query(
+        collection(db, 'posts'),
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc'), 
+        limit(5)
+      );
 
-    let unsubscribeDept: () => void = () => {};
-    let unsubscribeAdmin: () => void = () => {};
-
-    if (userData.role === 'admin') {
-      const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10));
-      unsubscribeDept = onSnapshot(postsQuery, (snapshot) => {
-        const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
         setPosts(postsData);
         setLoading(false);
       }, (error) => {
-        console.error("Admin post fetch error:", error);
-        setLoading(false);
+        console.error("Error fetching latest posts:", error);
+        // Fallback for missing index
+        if (error.code === 'failed-precondition') {
+             console.log("Firestore index missing. Fetching without sorting.");
+             const fallbackQuery = query(
+                collection(db, 'posts'),
+                where('authorDepartment', '==', userData.department),
+                limit(5)
+             );
+             onSnapshot(fallbackQuery, (snapshot) => {
+                 const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+                    .sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+                 setPosts(postsData);
+                 setLoading(false);
+             });
+        } else {
+            setLoading(false);
+        }
       });
-    } else if (isPrivileged) {
-      // Query 1: Posts from the user's department
-      const departmentPostsQuery = query(
-        collection(db, 'posts'),
-        where('authorDepartment', '==', userData.department)
-      );
-      
-      // Query 2: Posts from admins
-      const adminPostsQuery = query(
-        collection(db, 'posts'),
-        where('authorRole', '==', 'admin')
-      );
-      
-      unsubscribeDept = onSnapshot(departmentPostsQuery, (deptSnapshot) => {
-        const deptPosts = deptSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-        
-        // Nest the second snapshot listener
-        unsubscribeAdmin = onSnapshot(adminPostsQuery, (adminSnapshot) => {
-          const adminPosts = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-          
-          const combined = [...deptPosts, ...adminPosts];
-          // Remove duplicates (in case an admin is in the same department)
-          const uniquePosts = Array.from(new Map(combined.map(p => [p.id, p])).values());
-          
-          // Sort client-side
-          uniquePosts.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
-          
-          setPosts(uniquePosts.slice(0, 5)); // Apply limit after combining and sorting
-          setLoading(false);
-        }, (error) => {
-          console.error("Privileged admin post fetch error:", error);
-          setLoading(false); // Error on second query
-        });
-      }, (error) => {
-        console.error("Privileged department post fetch error:", error);
-        setLoading(false); // Error on first query
-      });
+  
+      return () => unsubscribe();
 
-    } else if (userData.department) {
-       // Regular users see non-admin posts from their department
-       const postsQuery = query(
-        collection(db, 'posts'),
-        where('authorDepartment', '==', userData.department),
-        where('authorRole', '!=', 'admin')
-      );
-       unsubscribeDept = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
-        setPosts(postsData.slice(0, 5));
-        setLoading(false);
-       }, (error) => {
-         console.error("Standard user post fetch error:", error);
-         setLoading(false);
-       });
     } else {
+      // If user has no department, they see no posts.
       setPosts([]);
       setLoading(false);
     }
-    
-    return () => {
-        unsubscribeDept();
-        unsubscribeAdmin();
-    };
     
   }, [userData, authLoading]);
   

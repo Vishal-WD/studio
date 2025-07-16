@@ -97,7 +97,7 @@ export function CreatePostDialog() {
       return;
     }
     
-    const isAuthorized = userData.role === 'admin' || userData.designation === 'dean' || userData.designation === 'hod';
+    const isAuthorized = userData.designation === 'dean' || userData.designation === 'hod';
     if (!isAuthorized) {
         toast({ variant: "destructive", title: "Unauthorized", description: "You do not have permission to create posts." });
         return;
@@ -108,7 +108,6 @@ export function CreatePostDialog() {
       const postData: any = {
         authorId: user.uid,
         authorName: userData.username,
-        authorRole: userData.role,
         authorDesignation: userData.designation || null,
         content: content,
         createdAt: serverTimestamp(),

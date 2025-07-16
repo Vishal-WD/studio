@@ -26,80 +26,41 @@ export default function PostsPage() {
 
     setLoadingPosts(true);
 
-    const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
-    let unsubscribePosts: () => void = () => {};
-    let unsubscribeAdminPosts: () => void = () => {};
-
-    if (userData.role === 'admin') {
-      const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-      unsubscribePosts = onSnapshot(postsQuery, (querySnapshot) => {
+    if (userData.department) {
+      const postsQuery = query(
+        collection(db, 'posts'), 
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
         setPosts(postsData);
         setLoadingPosts(false);
       }, (error) => {
-        console.error("Error fetching posts for admin:", error);
-        setLoadingPosts(false);
-      });
-
-    } else if (isPrivileged) {
-      // Query 1: Posts from the user's department
-      const departmentPostsQuery = query(
-        collection(db, 'posts'), 
-        where('authorDepartment', '==', userData.department)
-      );
-      // Query 2: Posts from admins
-      const adminPostsQuery = query(
-        collection(db, 'posts'),
-        where('authorRole', '==', 'admin')
-      );
-      
-      unsubscribePosts = onSnapshot(departmentPostsQuery, (deptSnapshot) => {
-        const deptPosts = deptSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-        
-        unsubscribeAdminPosts = onSnapshot(adminPostsQuery, (adminSnapshot) => {
-          const adminPosts = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-          
-          const combined = [...deptPosts, ...adminPosts];
-          const uniquePosts = Array.from(new Map(combined.map(p => [p.id, p])).values());
-          
-          uniquePosts.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
-          
-          setPosts(uniquePosts);
-          setLoadingPosts(false);
-        }, (error) => {
-          console.error("Error fetching posts for privileged user (admin portion):", error);
-          setLoadingPosts(false);
-        });
-      }, (error) => {
-        console.error("Error fetching posts for privileged user (dept portion):", error);
-        setLoadingPosts(false);
-      });
-
-    } else if (userData.department) {
-       // Regular users see non-admin posts from their department
-      const postsQuery = query(
-          collection(db, 'posts'), 
-          where('authorDepartment', '==', userData.department),
-          where('authorRole', '!=', 'admin')
-      );
-      unsubscribePosts = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
-        setPosts(postsData);
-        setLoadingPosts(false);
-      }, (error) => {
         console.error("Error fetching posts:", error);
-        setLoadingPosts(false);
+         if (error.code === 'failed-precondition') {
+             console.log("Firestore index missing. Fetching without sorting.");
+             const fallbackQuery = query(
+                collection(db, 'posts'),
+                where('authorDepartment', '==', userData.department)
+             );
+             onSnapshot(fallbackQuery, (snapshot) => {
+                 const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+                    .sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+                 setPosts(postsData);
+                 setLoadingPosts(false);
+             });
+        } else {
+            setLoadingPosts(false);
+        }
       });
+      
+      return () => unsubscribe();
     } else {
       setPosts([]);
       setLoadingPosts(false);
     }
-    
-    return () => {
-      unsubscribePosts();
-      unsubscribeAdminPosts();
-    };
 
   }, [userData, authLoading]);
 
@@ -107,7 +68,7 @@ export default function PostsPage() {
     setFocusedImage(imageUrl);
   };
 
-  const canCreatePost = userData?.role === 'admin' || userData?.designation === 'dean' || userData?.designation === 'hod';
+  const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
 
   return (
     <>
@@ -138,7 +99,7 @@ export default function PostsPage() {
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
                 <p>No posts found for you yet.</p>
-                 <p className="text-sm">If you are a HOD, Dean, or Admin, try creating one!</p>
+                 <p className="text-sm">If you are a HOD or Dean, try creating one!</p>
               </div>
             </CardContent>
           </Card>
