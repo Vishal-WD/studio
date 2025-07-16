@@ -147,7 +147,22 @@ export default function EventDetailPage() {
           )}
           
           <h1 className="text-4xl font-headline font-bold">{event.title}</h1>
-          <p className="text-lg text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+          <div className="text-lg text-muted-foreground whitespace-pre-wrap space-y-4">
+            <p>{event.description}</p>
+            {event.registrationLink && (
+              <div className="pt-2">
+                <p className="text-sm font-semibold text-foreground">Registration Link:</p>
+                <Link 
+                  href={getFormattedLink(event.registrationLink)} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-primary hover:underline break-all text-base"
+                >
+                  {event.registrationLink}
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="md:col-span-2">
