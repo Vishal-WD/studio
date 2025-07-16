@@ -114,10 +114,17 @@ export default function CreateUserPage() {
 
     } catch (error: any) {
       console.error("Error creating user:", error);
+      let description = 'An unknown error occurred.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email address is already in use. Please use a different email or log in.';
+      } else if (error.message) {
+        description = error.message;
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Error creating user',
-        description: error.message || 'An unknown error occurred.',
+        description: description,
       });
     } finally {
       setIsSubmitting(false);
