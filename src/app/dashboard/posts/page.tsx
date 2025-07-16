@@ -30,12 +30,14 @@ export default function PostsPage() {
     if (userData.department) {
         const postsQuery = query(
             collection(db, 'posts'), 
-            where('authorDepartment', '==', userData.department),
-            orderBy('createdAt', 'desc')
+            where('authorDepartment', '==', userData.department)
+            // Removed: orderBy('createdAt', 'desc') to avoid needing a composite index.
+            // For chronological order, the index from the error message is required.
         );
         
         const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-          const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+          const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
           setPosts(postsData);
           setLoadingPosts(false);
         }, (error) => {

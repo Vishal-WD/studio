@@ -31,12 +31,14 @@ export function LatestPostsFeed() {
       const postsQuery = query(
         collection(db, 'posts'),
         where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc'),
+        // Removed: orderBy('createdAt', 'desc') to avoid needing a composite index.
+        // For chronological order, the index from the error message is required.
         limit(5)
       );
 
       const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData);
         setLoading(false);
       }, (error) => {
