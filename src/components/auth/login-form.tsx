@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -94,6 +95,14 @@ export function LoginForm() {
           </form>
         </Form>
       </CardContent>
+      <CardFooter className="justify-center text-sm">
+        <p className="text-muted-foreground">
+            Don't have an account?{' '}
+            <Link href="/create-user" className="font-medium text-primary hover:underline">
+                Sign Up
+            </Link>
+        </p>
+      </CardFooter>
     </Card>
   );
 }

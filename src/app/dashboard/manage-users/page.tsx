@@ -174,7 +174,7 @@ export default function ManageUsersPage() {
           <p className="text-muted-foreground">View, edit, and delete user accounts.</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/create-user">
+          <Link href="/create-user">
             <PlusCircle className="mr-2" />
             Create User
           </Link>
