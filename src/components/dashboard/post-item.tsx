@@ -8,6 +8,7 @@ import Image from 'next/image';
 import type { MouseEventHandler } from 'react';
 import { Button } from '../ui/button';
 import { Download, File as FileIcon } from 'lucide-react';
+import Link from 'next/link';
 
 export interface Post {
   id: string;
@@ -101,17 +102,19 @@ export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
       <CardContent className="px-4 pb-4 pt-0">
         <p className="whitespace-pre-wrap">{post.content}</p>
         {post.fileUrl && !isImage && (
-            <div className="mt-4 rounded-md border bg-muted/50 p-3 flex items-center justify-between">
-                <div className="flex items-center gap-3 overflow-hidden">
-                    <FileIcon className="h-6 w-6 shrink-0 text-muted-foreground" />
-                    <p className="text-sm font-medium truncate" title={post.fileName}>
-                        {post.fileName}
-                    </p>
+            <a href={post.fileUrl} target="_blank" rel="noopener noreferrer" className="mt-4 block rounded-md border bg-muted/50 p-3 hover:bg-muted transition-colors">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <FileIcon className="h-6 w-6 shrink-0 text-muted-foreground" />
+                        <p className="text-sm font-medium truncate" title={post.fileName}>
+                            {post.fileName}
+                        </p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDownload}>
+                        <Download className="h-4 w-4" />
+                    </Button>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDownload}>
-                    <Download className="h-4 w-4" />
-                </Button>
-            </div>
+            </a>
         )}
       </CardContent>
     </Card>
