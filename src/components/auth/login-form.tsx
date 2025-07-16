@@ -95,14 +95,6 @@ export function LoginForm() {
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="justify-center text-sm">
-        <p className="text-muted-foreground">
-            Don't have an account?{' '}
-            <Link href="/create-user" className="font-medium text-primary hover:underline">
-                Sign Up
-            </Link>
-        </p>
-      </CardFooter>
     </Card>
   );
 }

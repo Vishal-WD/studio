@@ -40,7 +40,7 @@ const BottomNavBar = () => {
     { href: '/dashboard/resources', icon: <BookMarked />, label: 'Resources' },
     { href: '/dashboard/activity', icon: <Activity />, label: 'Activity' },
     ...(userData?.role === 'admin' ? [{ href: '/dashboard/manage-users', icon: <Users />, label: 'Users' }] : []),
-    ...(userData?.role === 'admin' ? [{ href: '/create-user', icon: <UserPlus />, label: 'Create' }] : []),
+    ...(userData?.role === 'admin' ? [{ href: '/dashboard/create-user', icon: <UserPlus />, label: 'Create' }] : []),
   ];
 
   return (
