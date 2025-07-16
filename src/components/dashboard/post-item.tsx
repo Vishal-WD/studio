@@ -56,8 +56,8 @@ export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
     }
   }
 
-  const handleDownload = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDownload = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!post.fileUrl || !post.fileName) return;
     const link = document.createElement('a');
     link.href = post.fileUrl;
@@ -102,7 +102,11 @@ export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
       <CardContent className="px-4 pb-4 pt-0">
         <p className="whitespace-pre-wrap">{post.content}</p>
         {post.fileUrl && !isImage && (
-            <a href={post.fileUrl} target="_blank" rel="noopener noreferrer" className="mt-4 block rounded-md border bg-muted/50 p-3 hover:bg-muted transition-colors">
+            <div 
+                className="mt-4 block rounded-md border bg-muted/50 p-3 hover:bg-muted transition-colors cursor-pointer"
+                onClick={() => handleDownload()}
+                title={`Download ${post.fileName}`}
+            >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 overflow-hidden">
                         <FileIcon className="h-6 w-6 shrink-0 text-muted-foreground" />
@@ -110,11 +114,11 @@ export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
                             {post.fileName}
                         </p>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDownload}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => handleDownload(e)}>
                         <Download className="h-4 w-4" />
                     </Button>
                 </div>
-            </a>
+            </div>
         )}
       </CardContent>
     </Card>
