@@ -9,11 +9,13 @@ import type { MouseEventHandler } from 'react';
 import { Button } from '../ui/button';
 import { Download, File as FileIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '../ui/badge';
 
 export interface Post {
   id: string;
   authorName: string;
   authorId: string;
+  authorRole: 'student' | 'faculty' | 'admin';
   authorDepartment?: string;
   authorDesignation?: 'dean' | 'hod' | 'club_incharge';
   content: string;
@@ -42,6 +44,9 @@ export const PostItem = ({ post, onImageClick, onDelete, children }: PostItemPro
   const formattedDate = post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
 
   const getDesignationDisplay = () => {
+    if (post.authorRole === 'admin') {
+      return <p className="text-xs text-muted-foreground">Admin</p>;
+    }
     if (!post.authorDesignation) return null;
     const designation = post.authorDesignation.replace('_', ' ');
     if ((post.authorDesignation === 'dean' || post.authorDesignation === 'hod') && post.authorDepartment) {
@@ -117,7 +122,12 @@ export const PostItem = ({ post, onImageClick, onDelete, children }: PostItemPro
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
-        <p className="whitespace-pre-wrap">{post.content}</p>
+        <div className="flex items-center justify-between">
+          <p className="whitespace-pre-wrap flex-1">{post.content}</p>
+          {post.authorRole === 'admin' && (
+             <Badge variant="destructive" className="ml-4">ADMIN</Badge>
+          )}
+        </div>
         {post.fileUrl && !isImage && (
             <div 
                 className="mt-4 block rounded-md border bg-muted/50 p-3 hover:bg-muted transition-colors cursor-pointer"

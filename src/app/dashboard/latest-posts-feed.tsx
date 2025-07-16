@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, limit, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, limit, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostItem, type Post } from './post-item';
@@ -26,33 +26,51 @@ export function LatestPostsFeed() {
     }
     setLoading(true);
 
-    // Users should only see posts from their own department.
-    if (userData.department) {
-      const postsQuery = query(
-        collection(db, 'posts'),
-        where('authorDepartment', '==', userData.department),
-        // Removed: orderBy('createdAt', 'desc') to avoid needing a composite index.
-        // For chronological order, the index from the error message is required.
-        limit(5)
+    let postsQuery;
+    const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
+
+    if (userData.role === 'admin') {
+      // Admins see all posts
+      postsQuery = query(collection(db, 'posts'), limit(5));
+    } else if (isPrivileged) {
+      // HODs/Deans see posts from their department OR posts from any admin
+      postsQuery = query(collection(db, 'posts'), limit(10)); // Fetch a bit more to filter client-side
+    } else if (userData.department) {
+      // Other users only see posts from their own department
+      postsQuery = query(
+          collection(db, 'posts'), 
+          where('authorDepartment', '==', userData.department),
+          where('authorRole', '!=', 'admin'), // Also exclude admin posts
+          limit(5)
       );
-
-      const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
-        setPosts(postsData);
-        setLoading(false);
-      }, (error) => {
-        console.error("Error fetching latest posts:", error);
-        setLoading(false);
-      });
-  
-      return () => unsubscribe();
-
     } else {
       // If user has no department, they see no posts.
       setPosts([]);
       setLoading(false);
+      return;
     }
+
+    const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+        let postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+
+        if (isPrivileged) {
+            postsData = postsData.filter(post => 
+                post.authorDepartment === userData.department || post.authorRole === 'admin'
+            );
+        }
+        
+        const sortedAndLimitedPosts = postsData
+          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+          .slice(0, 5);
+          
+        setPosts(sortedAndLimitedPosts);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching latest posts:", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
     
   }, [userData, authLoading]);
   

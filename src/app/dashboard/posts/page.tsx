@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
@@ -25,32 +25,55 @@ export default function PostsPage() {
     };
 
     setLoadingPosts(true);
-    
-    // Users should only see posts from their own department.
-    if (userData.department) {
-        const postsQuery = query(
-            collection(db, 'posts'), 
-            where('authorDepartment', '==', userData.department)
-            // Removed: orderBy('createdAt', 'desc') to avoid needing a composite index.
-            // For chronological order, the index from the error message is required.
-        );
-        
-        const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-          const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
-          setPosts(postsData);
-          setLoadingPosts(false);
-        }, (error) => {
-          console.error("Error fetching posts:", error);
-          setLoadingPosts(false);
-        });
 
-        return () => unsubscribe();
+    let postsQuery;
+    const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
+
+    if (userData.role === 'admin') {
+      // Admins see all posts
+      postsQuery = query(collection(db, 'posts'));
+    } else if (isPrivileged) {
+      // HODs/Deans see posts from their department OR posts from any admin
+      postsQuery = query(
+        collection(db, 'posts'),
+        where('authorDepartment', 'in', [userData.department, ''])
+        // A better query would be an OR query, but Firestore requires separate queries for that.
+        // This is a simplified approach assuming admin posts might have a blank department or a special value.
+        // For a true OR, we'd run two queries and merge the results.
+      );
+    } else if (userData.department) {
+      // Other users only see posts from their own department
+      postsQuery = query(
+          collection(db, 'posts'), 
+          where('authorDepartment', '==', userData.department),
+          where('authorRole', '!=', 'admin') // Also exclude admin posts
+      );
     } else {
       // If user has no department, they see no posts.
       setPosts([]);
       setLoadingPosts(false);
+      return;
     }
+    
+    const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+      let postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      
+      // Additional client-side filtering for the HOD/Dean case
+      if (isPrivileged) {
+          postsData = postsData.filter(post => 
+              post.authorDepartment === userData.department || post.authorRole === 'admin'
+          );
+      }
+      
+      postsData.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+      setPosts(postsData);
+      setLoadingPosts(false);
+    }, (error) => {
+      console.error("Error fetching posts:", error);
+      setLoadingPosts(false);
+    });
+
+    return () => unsubscribe();
 
   }, [userData, authLoading]);
 
@@ -58,7 +81,7 @@ export default function PostsPage() {
     setFocusedImage(imageUrl);
   };
 
-  const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
+  const canCreatePost = userData?.role === 'admin' || userData?.designation === 'dean' || userData?.designation === 'hod';
 
   return (
     <>
@@ -88,8 +111,8 @@ export default function PostsPage() {
           <Card>
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
-                <p>No posts found for your department yet.</p>
-                 <p className="text-sm">If you are a HOD or Dean, try creating one!</p>
+                <p>No posts found for you yet.</p>
+                 <p className="text-sm">If you are a HOD, Dean, or Admin, try creating one!</p>
               </div>
             </CardContent>
           </Card>
