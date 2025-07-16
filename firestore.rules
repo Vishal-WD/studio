@@ -1,5 +1,5 @@
-rules_version = '2';
 
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
@@ -10,16 +10,20 @@ service cloud.firestore {
     }
     
     match /posts/{postId} {
-      // Allow any authenticated user to read posts. 
-      // The client-side queries are responsible for filtering which posts a user sees.
-      allow read: if request.auth != null;
+      // Allow read if user is an admin OR...
+      // the post is an admin post and the user is a Dean/HOD OR...
+      // the post is from the user's department.
+      allow read: if request.auth != null && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (resource.data.authorRole == 'admin' && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']) ||
+          (resource.data.authorDepartment == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department)
+        );
       
       // Allow create if user is an Admin, Dean, or HOD, and they are the author.
       allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId && 
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']);
 
-      // Only the author of a post can delete it.
       allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
     
