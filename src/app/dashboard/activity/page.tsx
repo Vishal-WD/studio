@@ -78,12 +78,10 @@ export default function ActivityPage() {
       const postsQuery = query(
         collection(db, 'posts'), 
         where('authorId', '==', user.uid)
-        // Removed: orderBy('createdAt', 'desc') to avoid needing an index.
       );
       const eventsQuery = query(
         collection(db, 'events'), 
-        where('authorId', '==', user.uid),
-        orderBy('createdAt', 'desc')
+        where('authorId', '==', user.uid)
       );
 
       const unsubscribePosts = onSnapshot(postsQuery, (querySnapshot) => {
