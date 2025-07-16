@@ -2,35 +2,42 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+    
+    match /users/{userId} {
+      allow list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read, update, delete: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == userId);
+      allow create: if request.auth != null;
     }
     
-    // Helper function to check if the user is a staff member allowed to post
-    function isStaff() {
-      // Accessing user data from the 'users' collection
-      let userData = getUserData(request.auth.uid);
-      return userData.designation in ['dean', 'hod', 'club_incharge'];
-    }
-
-    match /users/{userId} {
-      // Admins can read/write any user document
-      allow read, write: if getUserData(request.auth.uid).role == 'admin';
-      // Users can only read their own document
-      allow read: if request.auth.uid == userId;
-    }
-
     match /posts/{postId} {
-      // Any authenticated user can read posts
+      // Allow any authenticated user to read posts. 
+      // The client-side queries are responsible for filtering which posts a user sees.
       allow read: if request.auth != null;
       
-      // Only authorized staff can create posts, and they must be the author.
-      // This rule was simplified to fix the "endless posting" issue.
-      allow create: if isStaff() && request.resource.data.authorId == request.auth.uid;
-        
-      // A user can only delete their own posts
-      allow delete: if request.auth.uid == resource.data.authorId;
+      // Allow create if user is an Admin, Dean, or HOD, and they are the author.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']);
+
+      // Only the author of a post can delete it.
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+    
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['faculty', 'admin'];
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+
+    match /resources/{resourceId} {
+      allow read: if request.auth != null 
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department;
+      allow create, update: if request.auth != null 
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == request.resource.data.department;
+      allow delete: if request.auth != null 
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department;
     }
   }
 }
