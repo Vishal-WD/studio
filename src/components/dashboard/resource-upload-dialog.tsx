@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db, storage } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Loader2, FileUp, X } from 'lucide-react';
 import type { Resource, ResourceType } from '@/app/dashboard/resources/page';
@@ -53,12 +53,14 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
   });
   
   useEffect(() => {
-    if (existingResource) {
-      form.reset({ type: existingResource.type });
-      setSelectedFile(null); // Clear file selection when editing
-    } else {
-      form.reset({ type: 'academic_calendar' });
-      setSelectedFile(null);
+    if (isOpen) {
+        if (existingResource) {
+          form.reset({ type: existingResource.type });
+        } else {
+          form.reset({ type: 'academic_calendar' });
+        }
+        setSelectedFile(null);
+        if(fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [existingResource, form, isOpen]);
   
@@ -82,14 +84,30 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
         toast({ variant: 'destructive', title: 'Error', description: 'Please select a file to upload.' });
         return;
     }
-    if (!user || !userData || !userData.department) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Authentication details missing.' });
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
       return;
     }
 
     setIsSubmitting(true);
     
     try {
+        // Server-side security check before upload
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (!userDocSnap.exists()) {
+            throw new Error("User data not found.");
+        }
+
+        const serverUserData = userDocSnap.data();
+        const canManage = serverUserData.designation === 'hod' || serverUserData.designation === 'dean';
+        const department = serverUserData.department;
+
+        if (!canManage || !department) {
+             throw new Error("You do not have permission to upload resources.");
+        }
+
         let fileUrl = existingResource?.fileUrl || '';
         let filePath = existingResource?.filePath || '';
         let fileName = existingResource?.fileName || '';
@@ -104,12 +122,12 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
                 } catch (error: any) {
                     // Ignore "object not found" errors, as it might have been deleted already
                     if (error.code !== 'storage/object-not-found') {
-                        throw error;
+                        console.warn("Could not delete old file, it may not exist:", error);
                     }
                 }
             }
 
-            filePath = `resources/${userData.department}/${values.type}/${Date.now()}_${selectedFile.name}`;
+            filePath = `resources/${department}/${values.type}/${Date.now()}_${selectedFile.name}`;
             const fileRef = ref(storage, filePath);
             const uploadResult = await uploadBytes(fileRef, selectedFile);
             fileUrl = await getDownloadURL(uploadResult.ref);
@@ -121,9 +139,9 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
             fileUrl,
             filePath,
             type: values.type,
-            department: userData.department,
+            department: department,
             authorId: user.uid,
-            authorName: userData.username,
+            authorName: serverUserData.username,
             createdAt: existingResource?.createdAt ? existingResource.createdAt : serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
@@ -138,9 +156,9 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
 
         onOpenChange(false);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error saving resource:", error);
-        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not save the resource. Please try again.' });
+        toast({ variant: 'destructive', title: 'Upload Failed', description: error.message || 'Could not save the resource. Please try again.' });
     } finally {
         setIsSubmitting(false);
     }
@@ -163,7 +181,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
             render={({ field }) => (
               <div className="space-y-2">
                 <Label>Resource Type</Label>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a resource type" />
                   </SelectTrigger>
@@ -189,11 +207,11 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
                 </p>
               </div>
             </div>
-             <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+             <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} disabled={isSubmitting}/>
              {selectedFile ? (
                 <div className="flex items-center justify-between p-2 text-sm border rounded-md">
-                    <span>{selectedFile.name}</span>
-                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile}>
+                    <span className="truncate">{selectedFile.name}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile} disabled={isSubmitting}>
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
