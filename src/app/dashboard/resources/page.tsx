@@ -74,7 +74,7 @@ const ResourceList = ({
               {resource.fileName}
             </a>
             <p className="text-sm text-muted-foreground">
-              Uploaded {formatDistanceToNow(new Date(resource.createdAt.seconds * 1000), { addSuffix: true })} by {resource.authorName}
+              Uploaded {resource.createdAt ? formatDistanceToNow(new Date(resource.createdAt.seconds * 1000), { addSuffix: true }) : 'just now'} by {resource.authorName}
             </p>
           </div>
           <div className="flex items-center gap-2">
