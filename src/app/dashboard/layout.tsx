@@ -8,6 +8,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Activity,
+  BookMarked,
 } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import Link from 'next/link';
@@ -35,6 +36,7 @@ const BottomNavBar = () => {
     { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
     { href: '/dashboard/events', icon: <Calendar />, label: 'Events' },
     { href: '/dashboard/posts', icon: <MessageSquare />, label: 'Posts' },
+    { href: '/dashboard/resources', icon: <BookMarked />, label: 'Resources' },
     { href: '/dashboard/activity', icon: <Activity />, label: 'Activity' },
     ...(userData?.role === 'admin' ? [{ href: '/dashboard/manage-users', icon: <ShieldCheck />, label: 'Users' }] : []),
   ];
