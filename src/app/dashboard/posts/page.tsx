@@ -74,11 +74,11 @@ export default function PostsPage() {
       const postsQuery = query(
           collection(db, 'posts'), 
           where('authorDepartment', '==', userData.department),
-          where('authorRole', '!=', 'admin'),
-          orderBy('createdAt', 'desc')
+          where('authorRole', '!=', 'admin')
       );
       unsubscribePosts = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
         setPosts(postsData);
         setLoadingPosts(false);
       }, (error) => {

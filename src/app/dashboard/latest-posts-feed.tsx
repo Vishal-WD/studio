@@ -29,6 +29,7 @@ export function LatestPostsFeed() {
     const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
 
     let unsubscribe: () => void = () => {};
+    let unsubAdmin: () => void = () => {};
 
     if (userData.role === 'admin') {
       const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10));
@@ -50,9 +51,9 @@ export function LatestPostsFeed() {
         where('authorRole', '==', 'admin')
       );
       
-      const unsubDepartment = onSnapshot(departmentPostsQuery, (deptSnapshot) => {
+      unsubscribe = onSnapshot(departmentPostsQuery, (deptSnapshot) => {
         const deptPosts = deptSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-        const unsubAdmin = onSnapshot(adminPostsQuery, (adminSnapshot) => {
+        unsubAdmin = onSnapshot(adminPostsQuery, (adminSnapshot) => {
           const adminPosts = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
           
           const combined = [...deptPosts, ...adminPosts];
@@ -64,30 +65,23 @@ export function LatestPostsFeed() {
           setLoading(false);
         }, (error) => {
           console.error("Privileged admin post fetch error:", error);
-          setLoading(false);
+          // Don't set loading to false here, dept query might still be running
         });
-        unsubscribe = () => unsubAdmin();
       }, (error) => {
         console.error("Privileged department post fetch error:", error);
         setLoading(false);
       });
-      
-      const mainUnsubscribe = unsubDepartment;
-      unsubscribe = () => {
-        mainUnsubscribe();
-      };
 
     } else if (userData.department) {
        const postsQuery = query(
         collection(db, 'posts'),
         where('authorDepartment', '==', userData.department),
-        where('authorRole', '!=', 'admin'),
-        orderBy('createdAt', 'desc'),
-        limit(5)
+        where('authorRole', '!=', 'admin')
       );
        unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-        setPosts(postsData);
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+        setPosts(postsData.slice(0, 5));
         setLoading(false);
        }, (error) => {
          console.error("Standard user post fetch error:", error);
@@ -99,9 +93,8 @@ export function LatestPostsFeed() {
     }
     
     return () => {
-        if (unsubscribe) {
-            unsubscribe();
-        }
+        unsubscribe();
+        unsubAdmin();
     };
     
   }, [userData, authLoading]);
