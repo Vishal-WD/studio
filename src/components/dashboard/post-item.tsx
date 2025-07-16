@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
 import type { MouseEventHandler } from 'react';
 import { Button } from '../ui/button';
-import { Download, File as FileIcon } from 'lucide-react';
+import { Download, File as FileIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export interface Post {
@@ -29,11 +29,12 @@ export interface Post {
 interface PostItemProps {
     post: Post;
     onImageClick: (imageUrl: string) => void;
-    children?: React.ReactNode; // For action buttons like delete
+    onDelete?: () => void; // Optional delete handler
+    children?: React.ReactNode; 
 }
 
 
-export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
+export const PostItem = ({ post, onImageClick, onDelete, children }: PostItemProps) => {
   const getInitials = (name = '') => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
   };
@@ -68,6 +69,17 @@ export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
   };
   
   const isImage = post.fileType?.startsWith('image/');
+  
+  const handleContainerClick = () => {
+    if (post.fileUrl && !isImage) {
+        handleDownload();
+    }
+  }
+  
+  const handleDeleteClick: MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.stopPropagation();
+    onDelete?.();
+  };
 
   return (
     <Card className="shadow-sm overflow-hidden">
@@ -94,6 +106,11 @@ export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
             </div>
             <div className="flex items-center gap-2">
                 <p className="text-xs text-muted-foreground">{formattedDate}</p>
+                {onDelete && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={handleDeleteClick}>
+                      <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
                 {children}
             </div>
           </div>
@@ -104,7 +121,7 @@ export const PostItem = ({ post, onImageClick, children }: PostItemProps) => {
         {post.fileUrl && !isImage && (
             <div 
                 className="mt-4 block rounded-md border bg-muted/50 p-3 hover:bg-muted transition-colors cursor-pointer"
-                onClick={() => handleDownload()}
+                onClick={handleContainerClick}
                 title={`Download ${post.fileName}`}
             >
                 <div className="flex items-center justify-between">

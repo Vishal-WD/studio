@@ -161,19 +161,12 @@ export default function ActivityPage() {
           activities.map(activity => {
             if (activity.type === 'post') {
                 return (
-                    <PostItem key={`post-${activity.id}`} post={activity} onImageClick={handleImageClick}>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive" 
-                            onClick={(e) => { 
-                                e.stopPropagation(); 
-                                handleDeleteClick(activity.id, 'post'); 
-                            }}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </PostItem>
+                    <PostItem 
+                        key={`post-${activity.id}`} 
+                        post={activity} 
+                        onImageClick={handleImageClick}
+                        onDelete={() => handleDeleteClick(activity.id, 'post')}
+                    />
                 )
             }
             if (activity.type === 'event') {
