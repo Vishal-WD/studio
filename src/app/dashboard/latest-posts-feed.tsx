@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, limit, where, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, limit, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostItem, type Post } from './post-item';
@@ -26,52 +26,83 @@ export function LatestPostsFeed() {
     }
     setLoading(true);
 
-    let postsQuery;
     const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
 
+    let unsubscribe: () => void = () => {};
+
     if (userData.role === 'admin') {
-      // Admins see all posts, sorted by creation date
-      postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5));
+      const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10));
+      unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+        const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        setPosts(postsData);
+        setLoading(false);
+      }, (error) => {
+        console.error("Admin post fetch error:", error);
+        setLoading(false);
+      });
     } else if (isPrivileged) {
-      // HODs/Deans see posts from their department OR posts from any admin.
-      // We fetch more and filter client-side because Firestore doesn't support complex OR queries easily.
-      postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10)); 
+      const departmentPostsQuery = query(
+        collection(db, 'posts'),
+        where('authorDepartment', '==', userData.department)
+      );
+      const adminPostsQuery = query(
+        collection(db, 'posts'),
+        where('authorRole', '==', 'admin')
+      );
+      
+      const unsubDepartment = onSnapshot(departmentPostsQuery, (deptSnapshot) => {
+        const deptPosts = deptSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        const unsubAdmin = onSnapshot(adminPostsQuery, (adminSnapshot) => {
+          const adminPosts = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+          
+          const combined = [...deptPosts, ...adminPosts];
+          const uniquePosts = Array.from(new Map(combined.map(p => [p.id, p])).values());
+          
+          uniquePosts.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+          
+          setPosts(uniquePosts.slice(0, 5));
+          setLoading(false);
+        }, (error) => {
+          console.error("Privileged admin post fetch error:", error);
+          setLoading(false);
+        });
+        unsubscribe = () => unsubAdmin();
+      }, (error) => {
+        console.error("Privileged department post fetch error:", error);
+        setLoading(false);
+      });
+      
+      const mainUnsubscribe = unsubDepartment;
+      unsubscribe = () => {
+        mainUnsubscribe();
+      };
+
     } else if (userData.department) {
-      // Other users only see posts from their own department
-       postsQuery = query(
+       const postsQuery = query(
         collection(db, 'posts'),
         where('authorDepartment', '==', userData.department),
         where('authorRole', '!=', 'admin'),
         orderBy('createdAt', 'desc'),
         limit(5)
       );
+       unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        setPosts(postsData);
+        setLoading(false);
+       }, (error) => {
+         console.error("Standard user post fetch error:", error);
+         setLoading(false);
+       });
     } else {
-      // If user has no department, they see no posts.
       setPosts([]);
       setLoading(false);
-      return;
     }
-
-    const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        let postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-
-        if (isPrivileged && userData.role !== 'admin') {
-            postsData = postsData.filter(post => 
-                post.authorDepartment === userData.department || post.authorRole === 'admin'
-            );
+    
+    return () => {
+        if (unsubscribe) {
+            unsubscribe();
         }
-        
-        // Final slice to ensure the limit is respected after any client-side filtering
-        const finalPosts = postsData.slice(0, 5);
-          
-        setPosts(finalPosts);
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching latest posts:", error);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
+    };
     
   }, [userData, authLoading]);
   
