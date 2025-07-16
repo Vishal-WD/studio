@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
@@ -13,20 +13,42 @@ import { PostItem, type Post } from '@/components/dashboard/post-item';
 
 export default function PostsPage() {
   const { userData, loading: authLoading } = useAuth();
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'posts'), 
-      orderBy('createdAt', 'desc')
-    );
+    if (authLoading || !userData) {
+      if (!authLoading) setLoadingPosts(false);
+      return;
+    };
+
+    setLoadingPosts(true);
+    let postsQuery;
+    const postsCollection = collection(db, 'posts');
+
+    // Dean sees all posts
+    if (userData.designation === 'dean') {
+      postsQuery = query(postsCollection, orderBy('createdAt', 'desc'));
+    } 
+    // Others see posts from their department
+    else if (userData.department) {
+      postsQuery = query(
+        postsCollection, 
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      // No department, no posts
+      setPosts([]);
+      setLoadingPosts(false);
+      return;
+    }
     
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
       const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setAllPosts(postsData);
+      setPosts(postsData);
       setLoadingPosts(false);
     }, (error) => {
       console.error("Error fetching posts:", error);
@@ -34,27 +56,11 @@ export default function PostsPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userData, authLoading]);
 
   const handleImageClick = (imageUrl: string) => {
     setFocusedImage(imageUrl);
   };
-
-  const filteredPosts = useMemo(() => {
-    if (authLoading || !userData) return [];
-    
-    // Only deans can see all posts
-    if (userData.designation === 'dean') {
-      return allPosts;
-    }
-
-    // Everyone else (admins, faculty, students) sees posts from their own department
-    if (userData.department) {
-        return allPosts.filter(post => post.authorDepartment === userData.department);
-    }
-
-    return [];
-  }, [allPosts, userData, authLoading]);
 
   const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
 
@@ -80,8 +86,8 @@ export default function PostsPage() {
             <Skeleton className="h-48 w-full" />
             <Skeleton className="h-48 w-full" />
           </>
-        ) : filteredPosts.length > 0 ? (
-          filteredPosts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)
+        ) : posts.length > 0 ? (
+          posts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)
         ) : (
           <Card>
             <CardContent className="py-12">

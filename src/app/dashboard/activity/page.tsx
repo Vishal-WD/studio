@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -78,17 +78,19 @@ export default function ActivityPage() {
       const postsQuery = query(
         collection(db, 'posts'), 
         where('authorId', '==', user.uid),
+        orderBy('createdAt', 'desc')
       );
       const eventsQuery = query(
         collection(db, 'events'), 
-        where('authorId', '==', user.uid)
+        where('authorId', '==', user.uid),
+        orderBy('createdAt', 'desc')
       );
 
       const unsubscribePosts = onSnapshot(postsQuery, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'post', ...doc.data() } as PostActivity));
         setActivities(prev => {
             const otherActivities = prev.filter(a => a.type !== 'post');
-            const all = [...otherActivities, ...postsData].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
+            const all = [...otherActivities, ...postsData].sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
             return all;
         });
         setLoading(false);
@@ -98,7 +100,7 @@ export default function ActivityPage() {
         const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'event', ...doc.data() } as EventActivity));
          setActivities(prev => {
             const otherActivities = prev.filter(a => a.type !== 'event');
-            const all = [...otherActivities, ...eventsData].sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
+            const all = [...otherActivities, ...eventsData].sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
             return all;
         });
         setLoading(false);

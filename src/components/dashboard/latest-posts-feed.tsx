@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { collection, query, onSnapshot, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostItem, type Post } from './post-item';
@@ -15,20 +15,42 @@ import { useAuth } from '@/hooks/use-auth';
 
 export function LatestPostsFeed() {
   const { userData, loading: authLoading } = useAuth();
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(
-        collection(db, 'posts'), 
+    if (authLoading || !userData) {
+      if(!authLoading) setLoading(false);
+      return;
+    }
+    setLoading(true);
+
+    let postsQuery;
+    const postsCollection = collection(db, 'posts');
+
+    if (userData.designation === 'dean') {
+      postsQuery = query(
+        postsCollection,
         orderBy('createdAt', 'desc'),
-        limit(20) // Fetch more posts to ensure we have enough to filter
-    );
+        limit(5)
+      );
+    } else if (userData.department) {
+      postsQuery = query(
+        postsCollection,
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc'),
+        limit(5)
+      );
+    } else {
+      setPosts([]);
+      setLoading(false);
+      return;
+    }
     
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
       const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setAllPosts(postsData);
+      setPosts(postsData);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching latest posts:", error);
@@ -36,29 +58,12 @@ export function LatestPostsFeed() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userData, authLoading]);
   
   const handleImageClick = (imageUrl: string) => {
     if (!imageUrl) return;
     setFocusedImage(imageUrl);
   };
-  
-  const filteredPosts = useMemo(() => {
-    if (authLoading || !userData) return [];
-
-    let postsToShow: Post[] = [];
-    
-    // Only deans can see all posts
-    if (userData.designation === 'dean') {
-      postsToShow = allPosts;
-    } else if (userData.department) {
-      // Everyone else (admins, faculty, students) sees posts from their own department
-      postsToShow = allPosts.filter(post => post.authorDepartment === userData.department);
-    }
-    
-    return postsToShow.slice(0, 5); // Return the latest 5 relevant posts
-
-  }, [allPosts, userData, authLoading]);
 
   return (
     <>
@@ -75,9 +80,9 @@ export function LatestPostsFeed() {
             <div className="space-y-4">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
             </div>
-        ) : filteredPosts.length > 0 ? (
+        ) : posts.length > 0 ? (
           <div className="space-y-4">
-            {filteredPosts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)}
+            {posts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)}
           </div>
         ) : (
           <Card>
