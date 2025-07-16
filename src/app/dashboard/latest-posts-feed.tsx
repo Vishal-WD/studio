@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, limit, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, limit, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostItem, type Post } from './post-item';
@@ -30,18 +30,20 @@ export function LatestPostsFeed() {
     const isPrivileged = userData.designation === 'dean' || userData.designation === 'hod';
 
     if (userData.role === 'admin') {
-      // Admins see all posts
-      postsQuery = query(collection(db, 'posts'), limit(5));
+      // Admins see all posts, sorted by creation date
+      postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5));
     } else if (isPrivileged) {
-      // HODs/Deans see posts from their department OR posts from any admin
-      postsQuery = query(collection(db, 'posts'), limit(10)); // Fetch a bit more to filter client-side
+      // HODs/Deans see posts from their department OR posts from any admin.
+      // We fetch more and filter client-side because Firestore doesn't support complex OR queries easily.
+      postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10)); 
     } else if (userData.department) {
       // Other users only see posts from their own department
-      postsQuery = query(
-          collection(db, 'posts'), 
-          where('authorDepartment', '==', userData.department),
-          where('authorRole', '!=', 'admin'), // Also exclude admin posts
-          limit(5)
+       postsQuery = query(
+        collection(db, 'posts'),
+        where('authorDepartment', '==', userData.department),
+        where('authorRole', '!=', 'admin'),
+        orderBy('createdAt', 'desc'),
+        limit(5)
       );
     } else {
       // If user has no department, they see no posts.
@@ -53,17 +55,16 @@ export function LatestPostsFeed() {
     const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
         let postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
 
-        if (isPrivileged) {
+        if (isPrivileged && userData.role !== 'admin') {
             postsData = postsData.filter(post => 
                 post.authorDepartment === userData.department || post.authorRole === 'admin'
             );
         }
         
-        const sortedAndLimitedPosts = postsData
-          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
-          .slice(0, 5);
+        // Final slice to ensure the limit is respected after any client-side filtering
+        const finalPosts = postsData.slice(0, 5);
           
-        setPosts(sortedAndLimitedPosts);
+        setPosts(finalPosts);
         setLoading(false);
     }, (error) => {
         console.error("Error fetching latest posts:", error);
