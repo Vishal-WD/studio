@@ -39,6 +39,7 @@ export function LatestPostsFeed() {
   }, []);
   
   const handleImageClick = (imageUrl: string) => {
+    if (!imageUrl) return;
     setFocusedImage(imageUrl);
   };
   

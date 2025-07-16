@@ -14,22 +14,26 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Paperclip, X, Loader2 } from "lucide-react";
+import { PlusCircle, Paperclip, X, Loader2, File as FileIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import Image from "next/image";
 
-const MAX_IMAGE_SIZE_MB = 5;
+const MAX_FILE_SIZE_MB = 0.7; // 700KB to be safe with Base64 encoding overhead
 const MAX_BASE64_SIZE_BYTES = 1048487; // Firestore's 1MB limit for a field
-const COMPRESSION_QUALITY = 0.7; // 70% quality
-const MAX_IMAGE_DIMENSION = 1280; // Max width/height of 1280px
+
+interface FileAttachment {
+    dataUrl: string;
+    name: string;
+    type: string;
+}
 
 export function CreatePostDialog() {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
-  const [image, setImage] = useState<{dataUrl: string} | null>(null);
+  const [attachment, setAttachment] = useState<FileAttachment | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -38,55 +42,31 @@ export function CreatePostDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Error", description: `Image file size should not exceed ${MAX_IMAGE_SIZE_MB}MB.` });
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        toast({ variant: "destructive", title: "Error", description: `File size should not exceed ${MAX_FILE_SIZE_MB}MB.` });
         return;
       }
 
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = document.createElement("img");
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          let { width, height } = img;
-
-          // Resize logic
-          if (width > height) {
-            if (width > MAX_IMAGE_DIMENSION) {
-              height *= MAX_IMAGE_DIMENSION / width;
-              width = MAX_IMAGE_DIMENSION;
+      reader.onloadend = (e) => {
+          const dataUrl = e.target?.result as string;
+           if (dataUrl.length > MAX_BASE64_SIZE_BYTES) {
+                toast({ variant: "destructive", title: "Error", description: "The selected file is too large to save. Please choose a smaller file." });
+                return;
             }
-          } else {
-            if (height > MAX_IMAGE_DIMENSION) {
-              width *= MAX_IMAGE_DIMENSION / height;
-              height = MAX_IMAGE_DIMENSION;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL(file.type, COMPRESSION_QUALITY);
-            
-            if (dataUrl.length > MAX_BASE64_SIZE_BYTES) {
-                 toast({ variant: "destructive", title: "Error", description: "After compression, the image is still too large. Please select a smaller or less complex file." });
-                 return;
-            }
-
-            setImage({ dataUrl });
-          }
-        };
-        img.src = e.target?.result as string;
+          setAttachment({
+              dataUrl,
+              name: file.name,
+              type: file.type
+          });
       };
       reader.readAsDataURL(file);
     }
   };
 
 
-  const removeImage = () => {
-    setImage(null);
+  const removeAttachment = () => {
+    setAttachment(null);
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -94,7 +74,7 @@ export function CreatePostDialog() {
 
   const resetForm = () => {
     setContent("");
-    removeImage();
+    removeAttachment();
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -134,13 +114,15 @@ export function CreatePostDialog() {
         authorDepartment: userData.department || "",
       };
 
-      if (image) {
-        if (image.dataUrl.length > MAX_BASE64_SIZE_BYTES) {
-            toast({ variant: "destructive", title: "Upload Error", description: "The selected image is too large to save. Please choose a smaller file." });
+      if (attachment) {
+        if (attachment.dataUrl.length > MAX_BASE64_SIZE_BYTES) {
+            toast({ variant: "destructive", title: "Upload Error", description: "The selected file is too large to save. Please choose a smaller file." });
             setIsSubmitting(false);
             return;
         }
-        postData.imageUrl = image.dataUrl;
+        postData.fileUrl = attachment.dataUrl;
+        postData.fileName = attachment.name;
+        postData.fileType = attachment.type;
       }
 
 
@@ -165,6 +147,8 @@ export function CreatePostDialog() {
       setIsSubmitting(false);
     }
   };
+  
+  const isImage = attachment?.type.startsWith('image/');
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -195,25 +179,36 @@ export function CreatePostDialog() {
               />
             </div>
 
-            {image && (
-              <div className="relative group">
-                <Image 
-                    src={image.dataUrl} 
-                    alt="Image preview" 
-                    width={500}
-                    height={300}
-                    className="rounded-md object-cover max-h-60 w-full" 
-                />
-                <Button 
+            {attachment && (
+              <div className="relative group rounded-md border p-2">
+                 <Button 
                     type="button" 
                     variant="destructive" 
                     size="icon" 
-                    className="absolute top-2 right-2 h-7 w-7 opacity-70 group-hover:opacity-100 transition-opacity"
-                    onClick={removeImage}
+                    className="absolute top-2 right-2 h-7 w-7 opacity-70 group-hover:opacity-100 transition-opacity z-10"
+                    onClick={removeAttachment}
                     disabled={isSubmitting}
                 >
                     <X className="h-4 w-4"/>
                 </Button>
+
+                {isImage ? (
+                    <Image 
+                        src={attachment.dataUrl} 
+                        alt="Image preview" 
+                        width={500}
+                        height={300}
+                        className="rounded-md object-cover max-h-60 w-full" 
+                    />
+                ) : (
+                    <div className="flex items-center gap-3 p-2">
+                        <FileIcon className="h-8 w-8 text-muted-foreground" />
+                        <div className="flex flex-col">
+                            <p className="text-sm font-medium truncate">{attachment.name}</p>
+                            <p className="text-xs text-muted-foreground">{attachment.type}</p>
+                        </div>
+                    </div>
+                )}
               </div>
             )}
           </div>
@@ -223,7 +218,7 @@ export function CreatePostDialog() {
                 ref={fileInputRef} 
                 className="hidden" 
                 onChange={handleFileChange}
-                accept="image/png, image/jpeg, image/gif"
+                accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
             />
             <Button 
                 type="button" 
@@ -232,7 +227,7 @@ export function CreatePostDialog() {
                 disabled={isSubmitting}
             >
                 <Paperclip className="mr-2 h-4 w-4" />
-                Add Image
+                Attach File
             </Button>
             <Button type="submit" disabled={isSubmitting || !content.trim()}>
               {isSubmitting ? (
