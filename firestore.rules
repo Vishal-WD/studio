@@ -3,18 +3,23 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     match /users/{userId} {
+      // Admins can list all users.
       allow list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // An admin can perform any action on any user. A regular user can only affect their own document.
       allow read, update, delete: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == userId);
+      
+      // Any authenticated user (specifically, an admin creating another user) can create a user document.
       allow create: if request.auth != null;
     }
     
     match /posts/{postId} {
-      allow read: if request.auth != null 
-                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.authorDepartment;
-
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod'];
-
+      allow read: if request.auth != null;
+      
+      // Allow users to create posts if the authorId matches their own UID
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+      
+      // Allow users to delete a post if the authorId matches their own UID
       allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
     
@@ -24,15 +29,17 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
 
+    // --- NEW RULE FOR RESOURCES ---
     match /resources/{resourceId} {
+      // Allow a user to read a resource if they are in the same department.
       allow read: if request.auth != null 
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department;
-      allow create, update: if request.auth != null 
+
+      // Allow write (create, update, delete) only if the user is a dean or hod.
+      // And ensure they can only manage resources for their own department.
+      allow write: if request.auth != null 
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == request.resource.data.department;
-      allow delete: if request.auth != null 
-                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
-                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department;
     }
   }
 }
