@@ -83,6 +83,14 @@ export default function EventDetailPage() {
     link.click();
     document.body.removeChild(link);
   };
+  
+  const getFormattedLink = (link: string) => {
+    if (link.startsWith('http://') || link.startsWith('https://')) {
+        return link;
+    }
+    return `https://${link}`;
+  }
+
 
   if (loading) {
     return (
@@ -151,7 +159,7 @@ export default function EventDetailPage() {
                     {event.registrationLink && (
                         <DetailItem icon={<LinkIcon size={20} />} label="Registration">
                              <Button asChild variant="secondary" className="mt-1">
-                                <Link href={event.registrationLink} target="_blank" rel="noopener noreferrer">
+                                <Link href={getFormattedLink(event.registrationLink)} target="_blank" rel="noopener noreferrer">
                                     Register Here
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
