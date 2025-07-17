@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, updateDoc, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -112,11 +112,37 @@ export default function ManageUsersPage() {
     try {
         const userDocRef = doc(db, 'users', selectedUser.uid);
         await updateDoc(userDocRef, updatedData);
+        
+        // Update denormalized data in posts and events
+        const batch = writeBatch(db);
+
+        // Update posts
+        const postsQuery = query(collection(db, 'posts'), where('authorId', '==', selectedUser.uid));
+        const postsSnapshot = await getDocs(postsQuery);
+        postsSnapshot.forEach(doc => {
+            batch.update(doc.ref, { 
+                authorName: updatedData.username,
+                authorDepartment: updatedData.department,
+                authorDesignation: updatedData.designation || null
+            });
+        });
+
+        // Update events
+        const eventsQuery = query(collection(db, 'events'), where('authorId', '==', selectedUser.uid));
+        const eventsSnapshot = await getDocs(eventsQuery);
+        eventsSnapshot.forEach(doc => {
+            batch.update(doc.ref, { 
+                authorName: updatedData.username,
+            });
+        });
+        
+        await batch.commit();
+
         setEditDialogOpen(false);
-        toast({ title: "Success", description: "User updated successfully." });
+        toast({ title: "Success", description: "User and all their content have been updated successfully." });
         fetchUsers(); // Refresh the user list
     } catch (error) {
-        console.error("Error updating user:", error);
+        console.error("Error updating user and their content:", error);
         toast({ variant: "destructive", title: "Error", description: "Could not update user." });
     }
   };
