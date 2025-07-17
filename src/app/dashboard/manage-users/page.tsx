@@ -119,8 +119,8 @@ export default function ManageUsersPage() {
         // Update posts
         const postsQuery = query(collection(db, 'posts'), where('authorId', '==', selectedUser.uid));
         const postsSnapshot = await getDocs(postsQuery);
-        postsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { 
+        postsSnapshot.forEach(postDoc => {
+            batch.update(postDoc.ref, { 
                 authorName: updatedData.username,
                 authorDepartment: updatedData.department,
                 authorDesignation: updatedData.designation || null
@@ -130,8 +130,8 @@ export default function ManageUsersPage() {
         // Update events
         const eventsQuery = query(collection(db, 'events'), where('authorId', '==', selectedUser.uid));
         const eventsSnapshot = await getDocs(eventsQuery);
-        eventsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { 
+        eventsSnapshot.forEach(eventDoc => {
+            batch.update(eventDoc.ref, { 
                 authorName: updatedData.username,
             });
         });
@@ -139,8 +139,8 @@ export default function ManageUsersPage() {
         // Update resources
         const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', selectedUser.uid));
         const resourcesSnapshot = await getDocs(resourcesQuery);
-        resourcesSnapshot.forEach(doc => {
-            batch.update(doc.ref, { 
+        resourcesSnapshot.forEach(resourceDoc => {
+            batch.update(resourceDoc.ref, { 
                 authorName: updatedData.username,
             });
         });
