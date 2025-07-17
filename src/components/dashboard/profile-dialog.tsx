@@ -90,7 +90,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setChangePasswordOpen(true)}>
+              <Button onClick={() => setChangePasswordOpen(true)}>
                   <KeyRound className="mr-2 h-4 w-4" />
                   Change Password
               </Button>
