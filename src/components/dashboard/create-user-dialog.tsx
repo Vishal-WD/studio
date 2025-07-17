@@ -36,6 +36,7 @@ import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { DEPARTMENTS } from '@/lib/constants';
+import { Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -73,6 +74,7 @@ interface CreateUserDialogProps {
 export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: CreateUserDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -160,9 +162,6 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
         <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle className="font-headline text-2xl">Create a New User</DialogTitle>
-                <DialogDescription>
-                    Fill in the details to create a new user account for the system.
-                </DialogDescription>
             </DialogHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
@@ -221,9 +220,18 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                    <Input type="password" placeholder="••••••••" {...field} />
-                                </FormControl>
+                                <div className="relative">
+                                    <FormControl>
+                                    <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground"
+                                    >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
                                 <FormMessage />
                                 </FormItem>
                             )}
