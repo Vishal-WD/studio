@@ -25,7 +25,7 @@ const BottomNavBar = () => {
   // Don't render until we know the user's role to prevent hydration mismatch
   if (loading) {
     return (
-        <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
+        <div className="fixed bottom-0 left-0 z-50 w-full h-16 border-t border-border" style={{ backgroundColor: '#1E1E1E' }}>
             <div className="grid h-full max-w-lg mx-auto grid-cols-5">
                 {/* You can add skeleton loaders here if you want */}
             </div>
@@ -43,13 +43,13 @@ const BottomNavBar = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
+    <div className="fixed bottom-0 left-0 z-50 w-full h-16 border-t border-border" style={{ backgroundColor: '#1E1E1E' }}>
       <div 
         className="grid h-full max-w-lg mx-auto font-medium"
         style={{ gridTemplateColumns: `repeat(${allMenuItems.length}, minmax(0, 1fr))` }}
       >
         {allMenuItems.map(item => (
-           <Link key={item.href} href={item.href} className={`inline-flex flex-col items-center justify-center px-5 hover:bg-muted group ${pathname === item.href ? 'text-primary' : 'text-muted-foreground'}`}>
+           <Link key={item.href} href={item.href} className={`inline-flex flex-col items-center justify-center px-5 hover:bg-gray-800 group ${pathname === item.href ? 'text-green-400' : 'text-gray-400 hover:text-white'}`}>
             {item.icon}
             <span className="text-xs">{item.label}</span>
         </Link>
