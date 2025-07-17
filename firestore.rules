@@ -3,52 +3,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check for admin role
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    // Helper function to check for HOD/Dean designation
-    function isDeanOrHod() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod'];
-    }
-
     match /users/{userId} {
-      allow list: if isAdmin();
-      allow read, update, delete: if isAdmin() || request.auth.uid == userId;
-      allow create: if request.auth != null; // User creation handled by admin dialog using a temporary auth instance
+      // Admins can list all users.
+      allow list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // An admin can perform any action on any user. A regular user can only affect their own document.
+      allow read, update, delete: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == userId);
+      
+      // Any authenticated user (specifically, an admin creating another user) can create a user document.
+      allow create: if request.auth != null;
     }
     
     match /posts/{postId} {
       allow read: if request.auth != null;
       
-      // Admins can write to any post (for updates). Users can only update/delete their own.
-      allow write: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.authorId);
-
-      // Create is limited to Deans and HODs, and they must be the author.
-      allow create: if request.auth != null && 
-                      request.auth.uid == request.resource.data.authorId && 
-                      isDeanOrHod();
+      // Allow users to create posts if the authorId matches their own UID
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+      
+      // Allow users to delete a post if the authorId matches their own UID
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
     
     match /events/{eventId} {
       allow read: if request.auth != null;
-
-      // Admins can write to any event (for updates). Users can only update/delete their own.
-      allow write: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.authorId);
-      
-      // Create is limited to Faculty and Admins.
       allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['faculty', 'admin'];
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
 
+    // --- NEW RULE FOR RESOURCES ---
     match /resources/{resourceId} {
-      // Users can only read resources from their own department.
+      // Allow a user to read a resource if they are in the same department.
       allow read: if request.auth != null 
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department;
 
-      // Only Deans/HODs can write to resources in their own department.
-      allow write: if request.auth != null && isDeanOrHod() &&
-                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department;
+      // Allow write (create, update, delete) only if the user is a dean or hod.
+      // And ensure they can only manage resources for their own department.
+      allow write: if request.auth != null 
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == request.resource.data.department;
     }
   }
 }
