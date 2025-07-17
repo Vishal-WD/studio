@@ -3,14 +3,15 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, deleteDoc, updateDoc, query, where, writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Search, Edit, Trash2, KeyRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DeleteUserDialog } from '@/components/dashboard/delete-user-dialog';
@@ -105,6 +106,23 @@ export default function ManageUsersPage() {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
   };
+
+  const handlePasswordReset = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: `An email has been sent to ${email} with instructions to reset their password.`,
+      });
+    } catch (error: any) {
+      console.error('Error sending password reset email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Could not send password reset email.',
+      });
+    }
+  };
   
   const handleUserUpdate = async (updatedData: Partial<User>) => {
     if (!selectedUser) return;
@@ -126,13 +144,13 @@ export default function ManageUsersPage() {
         postsSnapshot.forEach(postDoc => {
             const postUpdatePayload = {...updatePayload};
             if (updatedData.department) postUpdatePayload.authorDepartment = updatedData.department;
-            if (updatedData.hasOwnProperty('designation')) { // Check if designation is explicitly being set (even to null/undefined)
+            if (updatedData.hasOwnProperty('designation')) { 
               postUpdatePayload.authorDesignation = updatedData.designation || null;
             }
             batch.update(postDoc.ref, postUpdatePayload);
         });
 
-        // Update Events - Events only have authorName
+        // Update Events
         const eventsQuery = query(collection(db, 'events'), where('authorId', '==', selectedUser.uid));
         const eventsSnapshot = await getDocs(eventsQuery);
         eventsSnapshot.forEach(eventDoc => {
@@ -145,9 +163,12 @@ export default function ManageUsersPage() {
         const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', selectedUser.uid));
         const resourcesSnapshot = await getDocs(resourcesQuery);
         resourcesSnapshot.forEach(resourceDoc => {
-            const resourceUpdatePayload = {...updatePayload};
+            const resourceUpdatePayload: any = {};
+            if (updatedData.username) resourceUpdatePayload.authorName = updatedData.username;
             if (updatedData.department) resourceUpdatePayload.department = updatedData.department;
-            batch.update(resourceDoc.ref, resourceUpdatePayload);
+            if (Object.keys(resourceUpdatePayload).length > 0) {
+              batch.update(resourceDoc.ref, resourceUpdatePayload);
+            }
         });
         
         await batch.commit();
@@ -164,13 +185,11 @@ export default function ManageUsersPage() {
   const handleUserDelete = async () => {
     if (!selectedUser) return;
     try {
-      // NOTE: This only deletes the Firestore record, not the Firebase Auth user.
-      // Deleting the auth user requires server-side logic (e.g., a Cloud Function).
       const userDocRef = doc(db, 'users', selectedUser.uid);
       await deleteDoc(userDocRef);
       setDeleteDialogOpen(false);
       toast({ title: "Success", description: `User ${selectedUser.username} deleted.` });
-      fetchUsers(); // Refresh the user list
+      fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast({ variant: "destructive", title: "Error", description: "Could not delete user." });
@@ -178,7 +197,7 @@ export default function ManageUsersPage() {
   };
   
   const onUserCreated = () => {
-    fetchUsers(); // Refresh the list when a new user is created
+    fetchUsers();
   };
 
   const getDesignationDisplay = (user: User) => {
@@ -207,7 +226,7 @@ export default function ManageUsersPage() {
   }
   
   if (userData?.role !== 'admin') {
-    return null; // or a dedicated "Access Denied" component
+    return null;
   }
 
   return (
@@ -265,10 +284,13 @@ export default function ManageUsersPage() {
                       <TableCell>{u.department}</TableCell>
                       <TableCell>{u.role === 'student' ? u.regno : u.staffId}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)}>
+                        <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Edit User">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)}>
+                        <Button variant="ghost" size="icon" className="mr-2" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)} title="Delete User">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -313,5 +335,3 @@ export default function ManageUsersPage() {
     </>
   );
 }
-
-    
