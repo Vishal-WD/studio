@@ -12,12 +12,15 @@ import { Button } from '../ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+
 
 export function LatestPostsFeed() {
   const { userData, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (authLoading || !userData) {
@@ -41,6 +44,7 @@ export function LatestPostsFeed() {
         setLoading(false);
       }, (error) => {
         console.error("Error fetching latest posts:", error);
+        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch posts. You may need to have an index created in Firestore."})
         setLoading(false);
       });
   
@@ -52,7 +56,7 @@ export function LatestPostsFeed() {
       setLoading(false);
     }
     
-  }, [userData, authLoading]);
+  }, [userData, authLoading, toast]);
   
   const handleImageClick = (imageUrl: string) => {
     if (!imageUrl) return;

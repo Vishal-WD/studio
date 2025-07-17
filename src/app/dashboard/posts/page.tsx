@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
@@ -31,12 +31,12 @@ export default function PostsPage() {
     if (userData.department) {
       const postsQuery = query(
         collection(db, 'posts'), 
-        where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc')
+        where('authorDepartment', '==', userData.department)
       );
       
       const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData);
         setLoadingPosts(false);
       }, (error) => {
