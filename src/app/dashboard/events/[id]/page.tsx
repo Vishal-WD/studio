@@ -166,7 +166,7 @@ export default function EventDetailPage() {
         </div>
 
         <div className="md:col-span-2">
-            <Card className="sticky top-20 shadow-md">
+            <Card className="sticky top-20 shadow-md border-2 border-primary">
                 <CardContent className="pt-6 space-y-4">
                     <DetailItem icon={<Calendar size={20} />} label="Date" value={format(new Date(event.date), "EEEE, MMMM dd, yyyy")} />
                     <DetailItem icon={<MapPin size={20} />} label="Location" value={event.location} />

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -55,7 +56,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-lg">
+    <Card className="w-full max-w-md shadow-lg border-2 border-primary">
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Welcome Back!</CardTitle>
         <CardDescription>Enter your credentials to access your account.</CardDescription>

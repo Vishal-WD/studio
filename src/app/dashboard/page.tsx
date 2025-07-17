@@ -11,12 +11,11 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-md">
+      <Card className="shadow-md border-2 border-primary">
         <CardHeader>
           <CardTitle className="font-headline">
             {loading ? "Loading..." : `Welcome, ${userData?.username || "User"}!`}
           </CardTitle>
-          <CardDescription>Here's what's happening on campus today.</CardDescription>
         </CardHeader>
       </Card>
       

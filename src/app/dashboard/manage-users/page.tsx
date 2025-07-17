@@ -211,7 +211,7 @@ export default function ManageUsersPage() {
       <div className="p-4 md:p-6 lg:p-8">
         <Skeleton className="h-12 w-1/4 mb-4" />
         <Skeleton className="h-10 w-full mb-6" />
-        <Card>
+        <Card className="border-2 border-primary">
           <CardHeader>
              <Skeleton className="h-8 w-1/3" />
           </CardHeader>
@@ -235,7 +235,6 @@ export default function ManageUsersPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
-          <p className="text-muted-foreground">View, edit, and delete user accounts.</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <PlusCircle className="mr-2" />
@@ -243,7 +242,7 @@ export default function ManageUsersPage() {
         </Button>
       </div>
 
-      <Card className="shadow-md">
+      <Card className="shadow-md border-2 border-primary">
         <CardHeader>
           <CardTitle>All Users</CardTitle>
           <CardDescription>A list of all users in the system.</CardDescription>

@@ -83,7 +83,7 @@ export default function PostsPage() {
         ) : posts.length > 0 ? (
           posts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)
         ) : (
-          <Card>
+          <Card className="border-2 border-primary">
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
                 <p>No posts found for you yet.</p>

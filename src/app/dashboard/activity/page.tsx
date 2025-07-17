@@ -25,7 +25,7 @@ const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, on
     const formattedDate = event.createdAt ? formatDistanceToNow(new Date(event.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
   
     return (
-      <Card className="shadow-sm overflow-hidden">
+      <Card className="shadow-sm overflow-hidden border-2 border-primary">
          {event.imageUrl && (
             <div className="w-full h-64 relative bg-muted cursor-pointer" onClick={() => onImageClick(event.imageUrl!)}>
                 <img
@@ -174,7 +174,7 @@ export default function ActivityPage() {
             return null;
           })
         ) : (
-          <Card>
+          <Card className="border-2 border-primary">
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
                 <p>You haven't created any posts or events yet.</p>

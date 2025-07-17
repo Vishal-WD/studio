@@ -26,7 +26,7 @@ export interface Event {
 export const EventItem = ({ event }: { event: Event }) => {
   return (
     <Link href={`/dashboard/events/${event.id}`} className="flex">
-        <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 w-full">
+        <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 w-full border-2 border-primary">
         {event.imageUrl ? (
             <CardHeader className="p-0">
             <Image

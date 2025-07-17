@@ -52,7 +52,7 @@ const ResourceList = ({
 
   if (filteredResources.length === 0) {
     return (
-      <Card>
+      <Card className="border-2 border-primary">
         <CardContent className="py-12">
           <div className="text-center text-muted-foreground">
             <p>No {typeName} documents have been uploaded yet.</p>
@@ -65,7 +65,7 @@ const ResourceList = ({
   return (
     <div className="space-y-3">
       {filteredResources.map(resource => (
-        <Card key={resource.id} className="flex items-center justify-between p-4">
+        <Card key={resource.id} className="flex items-center justify-between p-4 border-2 border-primary">
           <div>
             <a 
               href={resource.fileUrl} 
@@ -192,7 +192,7 @@ export default function ResourcesPage() {
         )}
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 border-2 border-primary">
         <CardHeader>
             <CardTitle className="text-lg">Quick Links</CardTitle>
         </CardHeader>

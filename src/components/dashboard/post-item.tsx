@@ -80,7 +80,7 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
   };
 
   return (
-    <Card className="shadow-sm overflow-hidden">
+    <Card className="shadow-sm overflow-hidden border-2 border-primary">
         {post.fileUrl && isImage && (
             <div className="w-full h-64 relative bg-muted cursor-pointer" onClick={handleImageClick}>
                 <Image

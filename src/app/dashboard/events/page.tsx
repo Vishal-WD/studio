@@ -53,7 +53,7 @@ export default function EventsPage() {
         ) : events.length > 0 ? (
           events.map(event => <EventItem key={event.id} event={event} />)
         ) : (
-          <Card className="col-span-full">
+          <Card className="col-span-full border-2 border-primary">
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
                 <p>No events have been created yet.</p>
