@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, limit, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, limit, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostItem, type Post } from './post-item';
@@ -31,33 +31,17 @@ export function LatestPostsFeed() {
       const postsQuery = query(
         collection(db, 'posts'),
         where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc'), 
         limit(5)
       );
 
       const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData);
         setLoading(false);
       }, (error) => {
         console.error("Error fetching latest posts:", error);
-        // Fallback for missing index
-        if (error.code === 'failed-precondition') {
-             console.log("Firestore index missing. Fetching without sorting.");
-             const fallbackQuery = query(
-                collection(db, 'posts'),
-                where('authorDepartment', '==', userData.department),
-                limit(5)
-             );
-             onSnapshot(fallbackQuery, (snapshot) => {
-                 const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-                    .sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
-                 setPosts(postsData);
-                 setLoading(false);
-             });
-        } else {
-            setLoading(false);
-        }
+        setLoading(false);
       });
   
       return () => unsubscribe();

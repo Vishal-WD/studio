@@ -29,31 +29,17 @@ export default function PostsPage() {
     if (userData.department) {
       const postsQuery = query(
         collection(db, 'posts'), 
-        where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc')
+        where('authorDepartment', '==', userData.department)
       );
       
       const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+          .sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData);
         setLoadingPosts(false);
       }, (error) => {
         console.error("Error fetching posts:", error);
-         if (error.code === 'failed-precondition') {
-             console.log("Firestore index missing. Fetching without sorting.");
-             const fallbackQuery = query(
-                collection(db, 'posts'),
-                where('authorDepartment', '==', userData.department)
-             );
-             onSnapshot(fallbackQuery, (snapshot) => {
-                 const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-                    .sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
-                 setPosts(postsData);
-                 setLoadingPosts(false);
-             });
-        } else {
-            setLoadingPosts(false);
-        }
+        setLoadingPosts(false);
       });
       
       return () => unsubscribe();
