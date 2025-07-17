@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Edit, Trash2, KeyRound } from 'lucide-react';
+import { PlusCircle, Search, Edit, Trash2, KeyRound, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DeleteUserDialog } from '@/components/dashboard/delete-user-dialog';
@@ -253,7 +253,7 @@ export default function ManageUsersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
             <Input 
               placeholder="Search by name, email, ID, or department..." 
-              className="pl-9 w-full md:w-1/2 border-accent border-2 focus-visible:ring-0"
+              className="pl-9 w-full md:w-1/2 border-2 border-accent focus-visible:ring-0"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -261,9 +261,9 @@ export default function ManageUsersPage() {
 
     <Card className="shadow-md border-2 border-primary">
       <Tabs defaultValue="staff" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 rounded-none border-b-2 border-primary">
-            <TabsTrigger value="staff">Staff ({staffUsers.length})</TabsTrigger>
-            <TabsTrigger value="students">Students ({studentUsers.length})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 border-2 border-accent rounded-md">
+            <TabsTrigger value="staff">Staff</TabsTrigger>
+            <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
         <TabsContent value="staff" className="mt-0">
                 <CardHeader>
@@ -299,6 +299,9 @@ export default function ManageUsersPage() {
                             <TableCell className="text-right">
                                 <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Edit User">
                                 <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Change Role">
+                                <ShieldCheck className="h-4 w-4" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="mr-2" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
                                 <KeyRound className="h-4 w-4" />
@@ -349,6 +352,9 @@ export default function ManageUsersPage() {
                             <TableCell className="text-right">
                                 <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Edit User">
                                 <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Change Role">
+                                <ShieldCheck className="h-4 w-4" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="mr-2" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
                                 <KeyRound className="h-4 w-4" />
