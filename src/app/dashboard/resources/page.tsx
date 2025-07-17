@@ -6,7 +6,6 @@ import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from 'f
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Download, Edit, Trash2, ExternalLink } from 'lucide-react';
@@ -209,34 +208,42 @@ export default function ResourcesPage() {
         </CardContent>
       </Card>
       
-      <Tabs defaultValue="academic_calendar">
-        <TabsList className="grid w-full grid-cols-2 border-2 border-primary">
-          <TabsTrigger value="academic_calendar">Academic Calendar</TabsTrigger>
-          <TabsTrigger value="exam_schedule">Exam Schedules</TabsTrigger>
-        </TabsList>
-        <TabsContent value="academic_calendar" className="mt-4">
-            {loading || authLoading ? <Skeleton className="h-40 w-full" /> : 
-                <ResourceList 
-                    resources={resources} 
-                    type="academic_calendar" 
-                    canManage={canManage}
-                    onEdit={handleEditClick}
-                    onDelete={handleDeleteClick}
-                />
-            }
-        </TabsContent>
-        <TabsContent value="exam_schedule" className="mt-4">
-             {loading || authLoading ? <Skeleton className="h-40 w-full" /> : 
-                <ResourceList 
-                    resources={resources} 
-                    type="exam_schedule" 
-                    canManage={canManage}
-                    onEdit={handleEditClick}
-                    onDelete={handleDeleteClick}
-                />
-            }
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-8">
+        <Card className="border-2 border-primary">
+            <CardHeader>
+                <CardTitle className="font-headline text-xl">Academic Calendar</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
+                    <ResourceList 
+                        resources={resources} 
+                        type="academic_calendar" 
+                        canManage={canManage}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
+                    />
+                }
+            </CardContent>
+        </Card>
+
+        <Card className="border-2 border-primary">
+            <CardHeader>
+                <CardTitle className="font-headline text-xl">Exam Schedules</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
+                    <ResourceList 
+                        resources={resources} 
+                        type="exam_schedule" 
+                        canManage={canManage}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
+                    />
+                }
+            </CardContent>
+        </Card>
+      </div>
+
     </div>
 
     <ResourceUploadDialog 
