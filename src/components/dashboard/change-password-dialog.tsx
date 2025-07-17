@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { updatePassword } from 'firebase/auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const formSchema = z.object({
   newPassword: z.string().min(6, 'Password must be at least 6 characters long.'),
@@ -36,6 +38,8 @@ interface ChangePasswordDialogProps {
 export function ChangePasswordDialog({ isOpen, onOpenChange }: ChangePasswordDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [reauthError, setReauthError] = useState<string | null>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,32 +54,33 @@ export function ChangePasswordDialog({ isOpen, onOpenChange }: ChangePasswordDia
       return;
     }
 
+    setReauthError(null);
+
     try {
       await updatePassword(user, values.newPassword);
       toast({ title: 'Success', description: 'Your password has been changed successfully.' });
       onOpenChange(false);
-      form.reset();
     } catch (error: any) {
       console.error('Error updating password:', error);
-      let description = 'Could not update your password. Please try again.';
       if (error.code === 'auth/requires-recent-login') {
-        description = 'This is a sensitive operation. Please log out and log back in before changing your password.';
+        setReauthError('This is a sensitive operation. Please log out and log back in before changing your password.');
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Password Change Failed',
+          description: error.message || 'Could not update your password. Please try again.',
+        });
       }
-      toast({
-        variant: 'destructive',
-        title: 'Password Change Failed',
-        description: description,
-      });
     }
   };
 
   const handleOpenChange = (open: boolean) => {
-    if (!form.formState.isSubmitting) {
-        if (!open) {
-            form.reset();
-        }
-        onOpenChange(open);
+    if (form.formState.isSubmitting) return;
+    if (!open) {
+        form.reset();
+        setReauthError(null);
     }
+    onOpenChange(open);
   }
 
   return (
@@ -89,6 +94,15 @@ export function ChangePasswordDialog({ isOpen, onOpenChange }: ChangePasswordDia
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {reauthError && (
+              <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Re-authentication Required</AlertTitle>
+                  <AlertDescription>
+                      {reauthError}
+                  </AlertDescription>
+              </Alert>
+            )}
             <FormField
               control={form.control}
               name="newPassword"
@@ -116,7 +130,7 @@ export function ChangePasswordDialog({ isOpen, onOpenChange }: ChangePasswordDia
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={form.formState.isSubmitting}>
+              <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)} disabled={form.formState.isSubmitting}>
                 Cancel
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
