@@ -113,7 +113,7 @@ export default function ManageUsersPage() {
         const userDocRef = doc(db, 'users', selectedUser.uid);
         await updateDoc(userDocRef, updatedData);
         
-        // Update denormalized data in posts and events
+        // Denormalized data update: Update all content authored by this user
         const batch = writeBatch(db);
 
         // Update posts
@@ -131,6 +131,15 @@ export default function ManageUsersPage() {
         const eventsQuery = query(collection(db, 'events'), where('authorId', '==', selectedUser.uid));
         const eventsSnapshot = await getDocs(eventsQuery);
         eventsSnapshot.forEach(doc => {
+            batch.update(doc.ref, { 
+                authorName: updatedData.username,
+            });
+        });
+
+        // Update resources
+        const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', selectedUser.uid));
+        const resourcesSnapshot = await getDocs(resourcesQuery);
+        resourcesSnapshot.forEach(doc => {
             batch.update(doc.ref, { 
                 authorName: updatedData.username,
             });
