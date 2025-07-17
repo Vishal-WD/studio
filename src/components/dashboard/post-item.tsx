@@ -8,13 +8,12 @@ import Image from 'next/image';
 import type { MouseEventHandler } from 'react';
 import { Button } from '../ui/button';
 import { Download, File as FileIcon, Trash2 } from 'lucide-react';
-import Link from 'next/link';
 
 export interface Post {
   id: string;
   authorName: string;
   authorId: string;
-  authorDesignation?: 'dean' | 'hod' | 'club_incharge';
+  authorDesignation?: 'dean' | 'hod';
   authorDepartment?: string;
   content: string;
   fileUrl?: string;
@@ -30,11 +29,10 @@ interface PostItemProps {
     post: Post;
     onImageClick: (imageUrl: string) => void;
     onDelete?: () => void; // Optional delete handler
-    children?: React.ReactNode; 
 }
 
 
-export const PostItem = ({ post, onImageClick, onDelete, children }: PostItemProps) => {
+export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
   const getInitials = (name = '') => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
   };
@@ -111,7 +109,6 @@ export const PostItem = ({ post, onImageClick, onDelete, children }: PostItemPro
                       <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
-                {children}
             </div>
           </div>
         </div>
