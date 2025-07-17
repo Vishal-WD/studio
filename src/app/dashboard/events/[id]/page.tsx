@@ -33,9 +33,9 @@ const DetailItem = ({ icon, label, value, children }: { icon: React.ReactNode, l
     if (!value && !children) return null;
     return (
       <div className="flex items-start gap-3">
-        <div className="text-muted-foreground mt-1">{icon}</div>
+        <div className="text-primary mt-1">{icon}</div>
         <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-sm text-primary">{label}</p>
           {value && <p className="font-medium">{value}</p>}
           {children}
         </div>
@@ -142,12 +142,12 @@ export default function EventDetailPage() {
             </div>
           ) : (
             <div className="w-full h-80 bg-muted rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground">No Image Provided</p>
+                <p className="text-foreground">No Image Provided</p>
             </div>
           )}
           
           <h1 className="text-4xl font-headline font-bold">{event.title}</h1>
-          <div className="text-lg text-muted-foreground whitespace-pre-wrap space-y-4">
+          <div className="text-lg text-foreground whitespace-pre-wrap space-y-4">
             <p>{event.description}</p>
             {event.registrationLink && (
               <div className="pt-2">

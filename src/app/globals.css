@@ -19,7 +19,7 @@ body {
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 223 57% 12%;
     --accent: 45 74% 52%; /* #D4AF37 - Gold */
     --accent-foreground: 223 57% 12%;
     --destructive: 0 84.2% 60.2%;
@@ -54,7 +54,7 @@ body {
     --secondary: 223 57% 17%;
     --secondary-foreground: 48 83% 94%;
     --muted: 223 57% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 48 83% 94%;
     --accent: 45 74% 52%; /* #D4AF37 - Gold */
     --accent-foreground: 48 83% 94%;
     --destructive: 0 63% 31%;

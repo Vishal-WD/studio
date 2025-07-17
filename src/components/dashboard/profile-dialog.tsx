@@ -97,7 +97,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
             </DialogFooter>
           </>
         ) : (
-             <p className="py-4 text-center text-muted-foreground">Could not load user data.</p>
+             <p className="py-4 text-center text-foreground">Could not load user data.</p>
         )}
       </DialogContent>
     </Dialog>

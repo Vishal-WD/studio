@@ -85,7 +85,7 @@ export function LatestPostsFeed() {
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
-              <p className="text-center text-muted-foreground">No recent posts found for you.</p>
+              <p className="text-center text-foreground">No recent posts found for you.</p>
             </CardContent>
           </Card>
         )}

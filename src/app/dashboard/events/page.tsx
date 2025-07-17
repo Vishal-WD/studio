@@ -55,7 +55,7 @@ export default function EventsPage() {
         ) : (
           <Card className="col-span-full border-2 border-primary">
             <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
+              <div className="text-center text-foreground">
                 <p>No events have been created yet.</p>
                  <p className="text-sm">If you are a staff member, try creating one!</p>
               </div>

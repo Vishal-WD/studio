@@ -247,7 +247,7 @@ export default function ManageUsersPage() {
           <CardTitle>All Users</CardTitle>
           <CardDescription>A list of all users in the system.</CardDescription>
           <div className="relative pt-4">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
             <Input 
               placeholder="Search by name, email, ID, or department..." 
               className="pl-8 w-full md:w-1/3"

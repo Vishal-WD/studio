@@ -85,7 +85,7 @@ export default function PostsPage() {
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
+              <div className="text-center text-foreground">
                 <p>No posts found for you yet.</p>
                  <p className="text-sm">If you are a HOD or Dean, try creating one!</p>
               </div>

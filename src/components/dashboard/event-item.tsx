@@ -40,7 +40,7 @@ export const EventItem = ({ event }: { event: Event }) => {
         ) : (
             <CardHeader className="p-0">
                 <div className="w-full h-48 bg-muted flex items-center justify-center">
-                    <Calendar className="w-16 h-16 text-muted-foreground/50" />
+                    <Calendar className="w-16 h-16 text-foreground/50" />
                 </div>
             </CardHeader>
         )}
@@ -49,15 +49,15 @@ export const EventItem = ({ event }: { event: Event }) => {
             <CardDescription className="line-clamp-3">{event.description}</CardDescription>
         </CardContent>
         <CardFooter className="p-4 bg-muted/50 flex flex-col items-start gap-2">
-            <div className="flex items-center text-sm text-muted-foreground gap-2">
+            <div className="flex items-center text-sm text-foreground gap-2">
             <Calendar className="h-4 w-4" />
             <span>{format(new Date(event.date), "MMMM dd, yyyy")}</span>
             </div>
-            <div className="flex items-center text-sm text-muted-foreground gap-2">
+            <div className="flex items-center text-sm text-foreground gap-2">
             <MapPin className="h-4 w-4" />
             <span>{event.location}</span>
             </div>
-            <div className="flex items-center text-sm text-muted-foreground gap-2 pt-2">
+            <div className="flex items-center text-sm text-foreground gap-2 pt-2">
             <User className="h-4 w-4" />
             <span>Created by {event.authorName}</span>
             </div>

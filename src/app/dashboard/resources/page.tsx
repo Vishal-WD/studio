@@ -53,7 +53,7 @@ const ResourceList = ({
     return (
       <Card className="border-2 border-primary">
         <CardContent className="py-12">
-          <div className="text-center text-muted-foreground">
+          <div className="text-center text-foreground">
             <p>No {typeName} documents have been uploaded yet.</p>
           </div>
         </CardContent>
@@ -73,7 +73,7 @@ const ResourceList = ({
             >
               {resource.fileName}
             </a>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground">
               {resource.createdAt ? `${formatDistanceToNow(new Date(resource.createdAt.seconds * 1000), { addSuffix: true })} by ${resource.authorName}` : `just now by ${resource.authorName}`}
             </p>
           </div>
@@ -201,7 +201,7 @@ export default function ResourcesPage() {
                 className="flex items-center justify-between p-4 -m-4 rounded-lg hover:bg-muted transition-colors"
             >
                 <p className="font-medium">SIS LOGIN</p>
-                <ExternalLink className="h-5 w-5 text-muted-foreground" />
+                <ExternalLink className="h-5 w-5 text-foreground" />
             </Link>
         </CardContent>
       </Card>

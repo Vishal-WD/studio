@@ -199,15 +199,15 @@ export function DashboardHeader() {
                     <DropdownMenuItem key={`${notification.type}-${notification.id}`} asChild>
                          <Link href={notification.type === 'post' ? `/dashboard/posts` : `/dashboard/events/${notification.id}`} className="block w-full cursor-pointer">
                             <div className="flex items-start gap-3">
-                                {notification.type === 'post' ? <MessageSquare className="h-4 w-4 mt-1 text-muted-foreground" /> : <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />}
+                                {notification.type === 'post' ? <MessageSquare className="h-4 w-4 mt-1 text-foreground" /> : <Calendar className="h-4 w-4 mt-1 text-foreground" />}
                                 <div>
                                     <p className="text-sm font-medium line-clamp-1">
                                         {notification.type === 'post' ? 'New Post' : notification.title}
                                     </p>
-                                    <p className="text-xs text-muted-foreground line-clamp-2">
+                                    <p className="text-xs text-foreground line-clamp-2">
                                         {notification.type === 'post' ? notification.content : `From ${notification.authorName}`}
                                     </p>
-                                    <p className="text-xs text-muted-foreground/80 mt-1">
+                                    <p className="text-xs text-foreground/80 mt-1">
                                         {formatDistanceToNow(new Date(notification.createdAt.seconds * 1000), { addSuffix: true })}
                                     </p>
                                 </div>
@@ -223,7 +223,7 @@ export function DashboardHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onSelect={(e) => { e.preventDefault(); handleClearNotifications(); }} 
-                  className="flex items-center justify-center text-xs text-muted-foreground cursor-pointer"
+                  className="flex items-center justify-center text-xs text-foreground cursor-pointer"
                 >
                   Clear All Notifications
                 </DropdownMenuItem>
@@ -242,7 +242,7 @@ export function DashboardHeader() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>
               <div className="font-bold">{userData?.username}</div>
-              <div className="text-xs text-muted-foreground font-normal">{userData?.email}</div>
+              <div className="text-xs text-foreground font-normal">{userData?.email}</div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => setProfileOpen(true)} className="cursor-pointer">Profile</DropdownMenuItem>

@@ -47,14 +47,14 @@ const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, on
                 </CardTitle>
             </div>
              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">{formattedDate}</p>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(event.id)}>
+                <p className="text-xs text-foreground">{formattedDate}</p>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:text-destructive" onClick={() => onDelete(event.id)}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
         </CardHeader>
         <CardContent className="px-4 pb-4 pt-0">
-            <p className="text-muted-foreground line-clamp-3">{event.description}</p>
+            <p className="text-foreground line-clamp-3">{event.description}</p>
         </CardContent>
       </Card>
     );
@@ -75,19 +75,19 @@ const ResourceItem = ({ resource, onDelete }: { resource: ResourceActivity, onDe
                 </CardTitle>
             </div>
              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">{formattedDate}</p>
-                 <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                <p className="text-xs text-foreground">{formattedDate}</p>
+                 <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-foreground">
                     <a href={resource.fileUrl} download={resource.fileName}>
                         <Download className="h-4 w-4" />
                     </a>
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(resource.id)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:text-destructive" onClick={() => onDelete(resource.id)}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
         </CardHeader>
         <CardContent className="px-4 pb-4 pt-0">
-            <p className="text-muted-foreground line-clamp-3 capitalize">
+            <p className="text-foreground line-clamp-3 capitalize">
                 {resource.type.replace('_', ' ')} for the {resource.department} department.
             </p>
         </CardContent>
@@ -206,7 +206,7 @@ export default function ActivityPage() {
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
+              <div className="text-center text-foreground">
                 <p>You haven't created any posts, events, or resources yet.</p>
               </div>
             </CardContent>

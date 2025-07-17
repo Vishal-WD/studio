@@ -123,7 +123,7 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <FileIcon className="h-6 w-6 shrink-0 text-muted-foreground" />
+                        <FileIcon className="h-6 w-6 shrink-0 text-foreground" />
                         <p className="text-sm font-medium truncate" title={post.fileName}>
                             {post.fileName}
                         </p>
