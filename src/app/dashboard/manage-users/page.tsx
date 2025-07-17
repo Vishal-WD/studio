@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DeleteUserDialog } from '@/components/dashboard/delete-user-dialog';
 import { EditUserDialog } from '@/components/dashboard/edit-user-dialog';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
+import { CreateUserDialog } from '@/components/dashboard/create-user-dialog';
 
 interface User {
   id: string;
@@ -42,6 +42,7 @@ export default function ManageUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -135,6 +136,10 @@ export default function ManageUsersPage() {
       toast({ variant: "destructive", title: "Error", description: "Could not delete user." });
     }
   };
+  
+  const onUserCreated = () => {
+    fetchUsers(); // Refresh the list when a new user is created
+  };
 
   const getDesignationDisplay = (user: User) => {
     if (!user.designation) return 'N/A';
@@ -173,11 +178,9 @@ export default function ManageUsersPage() {
           <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
           <p className="text-muted-foreground">View, edit, and delete user accounts.</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/create-user">
-            <PlusCircle className="mr-2" />
-            Create User
-          </Link>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <PlusCircle className="mr-2" />
+          Create User
         </Button>
       </div>
 
@@ -244,6 +247,12 @@ export default function ManageUsersPage() {
         </CardContent>
       </Card>
     </div>
+    
+    <CreateUserDialog 
+      isOpen={isCreateDialogOpen}
+      onOpenChange={setCreateDialogOpen}
+      onUserCreated={onUserCreated}
+    />
     
     {selectedUser && (
       <>
