@@ -210,7 +210,7 @@ export default function ResourcesPage() {
       </Card>
       
       <Tabs defaultValue="academic_calendar">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2 border-2 border-primary">
           <TabsTrigger value="academic_calendar">Academic Calendar</TabsTrigger>
           <TabsTrigger value="exam_schedule">Exam Schedules</TabsTrigger>
         </TabsList>
