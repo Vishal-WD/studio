@@ -35,6 +35,7 @@ import { app, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
+import { DEPARTMENTS } from '@/lib/constants';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -232,11 +233,20 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                             name="department"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Department</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Computer Science" {...field} />
-                                </FormControl>
-                                <FormMessage />
+                                    <FormLabel>Department</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a department" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {DEPARTMENTS.map(dep => (
+                                                <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />

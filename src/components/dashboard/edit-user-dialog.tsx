@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { deleteField } from 'firebase/firestore';
+import { DEPARTMENTS } from '@/lib/constants';
 
 interface User {
   id: string;
@@ -132,18 +133,27 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="department"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+             <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Department</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {DEPARTMENTS.map(dep => (
+                                    <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
             <FormField
               control={form.control}
