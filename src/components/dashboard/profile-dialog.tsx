@@ -38,9 +38,9 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     if (!value) return null;
     return (
       <div className="flex items-center gap-4">
-        <div className="text-muted-foreground">{icon}</div>
+        <div className="text-primary">{icon}</div>
         <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-sm text-primary font-medium">{label}</p>
           <p className="font-medium capitalize">{value}</p>
         </div>
       </div>
@@ -73,7 +73,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
                       <AvatarFallback className="text-2xl bg-muted">{getInitials(userData.username)}</AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-semibold">{userData.username}</h2>
-                  <p className="text-sm text-muted-foreground">{userData.email}</p>
+                  <p className="text-sm text-primary">{userData.email}</p>
               </div>
               <div className="space-y-6 border-t pt-6">
                   <DetailItem icon={<UserCircle2 size={20} />} label="Role" value={userData.role} />
