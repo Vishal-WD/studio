@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
 import { PostItem, type Post } from '@/components/dashboard/post-item';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PostsPage() {
   const { userData, loading: authLoading } = useAuth();
@@ -17,6 +18,7 @@ export default function PostsPage() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (authLoading || !userData) {
@@ -29,16 +31,17 @@ export default function PostsPage() {
     if (userData.department) {
       const postsQuery = query(
         collection(db, 'posts'), 
-        where('authorDepartment', '==', userData.department)
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc')
       );
       
       const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-          .sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData);
         setLoadingPosts(false);
       }, (error) => {
         console.error("Error fetching posts:", error);
+        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch posts. You may need to have an index created in Firestore."})
         setLoadingPosts(false);
       });
       
@@ -48,7 +51,7 @@ export default function PostsPage() {
       setLoadingPosts(false);
     }
 
-  }, [userData, authLoading]);
+  }, [userData, authLoading, toast]);
 
   const handleImageClick = (imageUrl: string) => {
     setFocusedImage(imageUrl);
