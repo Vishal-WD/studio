@@ -37,11 +37,20 @@ service cloud.firestore {
       // Allow a user to read a resource if they are in the same department. Admins can read all.
       allow read: if isAdmin() || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department);
 
-      // Admins can write anything. HODs/Deans can manage resources for their own department.
-      allow write: if isAdmin() || (
-        request.auth != null 
+      // For creating a new resource
+      allow create: if isAdmin() || (
+        request.auth != null
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
+        // Check against the data being sent in the request
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == request.resource.data.department
+      );
+
+      // For updating or deleting an existing resource
+      allow update, delete: if isAdmin() || (
+        request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
+        // Check against the data already in the database
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department
       );
     }
   }
