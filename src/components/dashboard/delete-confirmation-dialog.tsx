@@ -26,7 +26,6 @@ export function DeleteConfirmationDialog({
     itemName 
 }: DeleteConfirmationDialogProps) {
     const title = `Are you absolutely sure?`;
-    const description = `This action cannot be undone. This will permanently delete this ${itemName ? `**${itemName}**` : `this ${itemType}`} from our servers.`;
     const cta = `Yes, delete ${itemType}`;
 
   return (
