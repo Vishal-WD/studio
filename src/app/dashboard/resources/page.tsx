@@ -162,9 +162,7 @@ export default function ResourcesPage() {
     if (!deletingResource) return;
 
     try {
-        // Only delete Firestore document
         await deleteDoc(doc(db, 'resources', deletingResource.id));
-        
         toast({ title: 'Success', description: 'Resource deleted successfully.' });
     } catch (error) {
         console.error("Error deleting resource:", error);
@@ -256,7 +254,6 @@ export default function ResourcesPage() {
         isOpen={isDeleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={handleDeleteConfirm}
-        itemName={deletingResource?.fileName}
         itemType="resource"
     />
     </>
