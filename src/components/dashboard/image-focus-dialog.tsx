@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 
 interface ImageFocusDialogProps {
     isOpen: boolean;
@@ -29,6 +29,10 @@ export function ImageFocusDialog({ isOpen, onOpenChange, imageUrl }: ImageFocusD
     link.click();
     document.body.removeChild(link);
   };
+  
+  const handleClose = () => {
+    onOpenChange(false);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -39,15 +43,24 @@ export function ImageFocusDialog({ isOpen, onOpenChange, imageUrl }: ImageFocusD
 
         {imageUrl && (
             <div className="relative w-full h-[80vh]">
-                <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute top-4 right-4 z-10"
-                    onClick={handleDownload}
-                    aria-label="Download image"
-                >
-                    <Download className="h-5 w-5"/>
-                </Button>
+                <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={handleDownload}
+                        aria-label="Download image"
+                    >
+                        <Download className="h-5 w-5"/>
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={handleClose}
+                        aria-label="Close full screen"
+                    >
+                        <X className="h-5 w-5"/>
+                    </Button>
+                </div>
                 <Image
                     src={imageUrl}
                     alt="Focused image"
