@@ -49,7 +49,7 @@ const BottomNavBar = () => {
         style={{ gridTemplateColumns: `repeat(${allMenuItems.length}, minmax(0, 1fr))` }}
       >
         {allMenuItems.map(item => (
-           <Link key={item.href} href={item.href} className={`inline-flex flex-col items-center justify-center px-5 hover:bg-gray-800 group ${pathname === item.href ? 'text-green-400' : 'text-gray-400 hover:text-white'}`}>
+           <Link key={item.href} href={item.href} className={`inline-flex flex-col items-center justify-center px-5 hover:bg-gray-800 group ${pathname === item.href ? 'text-accent' : 'text-gray-400 hover:text-white'}`}>
             {item.icon}
             <span className="text-xs">{item.label}</span>
         </Link>
