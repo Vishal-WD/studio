@@ -8,7 +8,7 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
-import { type VariantProps } from "class-variance-authority"
+import { type VariantProps, toastVariants } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000 // This is legacy, the new implementation uses a shorter, more direct timeout
@@ -159,6 +159,7 @@ function toast({ ...props }: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
+      variant: props.variant || 'success',
       id,
       open: true,
       onOpenChange: (open) => {
@@ -198,8 +199,5 @@ function useToast() {
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }
 }
-
-// NOTE: This import is needed to avoid a build error.
-import { type toastVariants } from "@/components/ui/toast"
 
 export { useToast, toast }
