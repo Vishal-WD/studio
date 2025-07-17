@@ -253,7 +253,7 @@ export default function ManageUsersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
             <Input 
               placeholder="Search by name, email, ID, or department..." 
-              className="pl-9 w-full md:w-1/2 border-2 border-accent focus-visible:ring-0"
+              className="pl-9 w-full md:w-1/2 border-primary focus-visible:ring-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -261,7 +261,7 @@ export default function ManageUsersPage() {
 
     <Card className="shadow-md border-2 border-primary">
       <Tabs defaultValue="staff" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 border-2 border-accent rounded-md">
+        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 border-2 border-primary rounded-md">
             <TabsTrigger value="staff">Staff</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
