@@ -37,7 +37,6 @@ export default function EventsPage() {
        <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Campus Events</h1>
-          <p className="text-muted-foreground">Find out about upcoming and past events on campus.</p>
         </div>
         {authLoading ? (
             <Skeleton className="h-10 w-32" />

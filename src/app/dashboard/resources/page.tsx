@@ -75,7 +75,7 @@ const ResourceList = ({
               {resource.fileName}
             </a>
             <p className="text-sm text-muted-foreground">
-              {resource.createdAt ? formatDistanceToNow(new Date(resource.createdAt.seconds * 1000), { addSuffix: true }) : 'just now'} by {resource.authorName}
+              {resource.createdAt ? `${formatDistanceToNow(new Date(resource.createdAt.seconds * 1000), { addSuffix: true })} by ${resource.authorName}` : `just now by ${resource.authorName}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -183,7 +183,6 @@ export default function ResourcesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Resources</h1>
-          <p className="text-muted-foreground">Find important documents and quick links.</p>
         </div>
         {canManage && (
           <Button onClick={handleAddClick}>

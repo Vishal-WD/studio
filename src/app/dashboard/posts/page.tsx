@@ -65,7 +65,6 @@ export default function PostsPage() {
        <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Community Posts</h1>
-          <p className="text-muted-foreground">Catch up on announcements and what's on everyone's mind.</p>
         </div>
         {authLoading ? (
             <Skeleton className="h-10 w-32" />

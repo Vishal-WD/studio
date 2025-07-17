@@ -53,9 +53,6 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">My Profile</DialogTitle>
-          <DialogDescription>
-            Your personal information and account details.
-          </DialogDescription>
         </DialogHeader>
         {loading ? (
           <div className="space-y-4 py-4">

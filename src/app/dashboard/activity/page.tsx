@@ -147,7 +147,6 @@ export default function ActivityPage() {
     <div className="max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-headline font-bold">My Activity</h1>
-        <p className="text-muted-foreground">A collection of all the posts and events you've created.</p>
       </div>
 
       <div className="space-y-4">
