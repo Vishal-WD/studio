@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -120,11 +119,11 @@ export default function ManageUsersPage() {
         const postsQuery = query(collection(db, 'posts'), where('authorId', '==', selectedUser.uid));
         const postsSnapshot = await getDocs(postsQuery);
         postsSnapshot.forEach(postDoc => {
-            batch.update(postDoc.ref, { 
-                authorName: updatedData.username,
-                authorDepartment: updatedData.department,
-                authorDesignation: updatedData.designation || null
-            });
+            const updatePayload: any = { authorName: updatedData.username };
+            if (updatedData.department) updatePayload.authorDepartment = updatedData.department;
+            if (updatedData.designation) updatePayload.authorDesignation = updatedData.designation;
+            else if (updatedData.designation === null) updatePayload.authorDesignation = null;
+            batch.update(postDoc.ref, updatePayload);
         });
 
         // Update events
@@ -308,3 +307,5 @@ export default function ManageUsersPage() {
     </>
   );
 }
+
+    
