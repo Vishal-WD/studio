@@ -43,9 +43,9 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
     if (!post.authorDesignation) return null;
     const designation = post.authorDesignation.replace('_', ' ');
     if ((post.authorDesignation === 'dean' || post.authorDesignation === 'hod') && post.authorDepartment) {
-      return <p className="text-xs text-muted-foreground capitalize">{designation} of {post.authorDepartment}</p>;
+      return <p className="text-xs text-foreground capitalize">{designation} of {post.authorDepartment}</p>;
     }
-    return <p className="text-xs text-muted-foreground capitalize">{designation}</p>;
+    return <p className="text-xs text-foreground capitalize">{designation}</p>;
   }
 
   const handleImageClick: MouseEventHandler<HTMLDivElement> = (e) => {
@@ -82,7 +82,7 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
   return (
     <Card className="shadow-sm overflow-hidden border-2 border-primary">
         {post.fileUrl && isImage && (
-            <div className="w-full h-64 relative bg-muted cursor-pointer" onClick={handleImageClick}>
+            <div className="w-full h-64 relative bg-muted cursor-pointer border-b" onClick={handleImageClick}>
                 <Image
                     src={post.fileUrl}
                     alt="Post image"
@@ -103,9 +103,9 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
               {getDesignationDisplay()}
             </div>
             <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">{formattedDate}</p>
+                <p className="text-xs text-foreground">{formattedDate}</p>
                 {onDelete && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={handleDeleteClick}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:text-destructive" onClick={handleDeleteClick}>
                       <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
