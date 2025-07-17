@@ -112,36 +112,42 @@ export default function ManageUsersPage() {
         const userDocRef = doc(db, 'users', selectedUser.uid);
         await updateDoc(userDocRef, updatedData);
         
-        // Denormalized data update: Update all content authored by this user
         const batch = writeBatch(db);
 
-        // Update posts
+        // Common payload parts
+        const updatePayload: any = {};
+        if (updatedData.username) {
+            updatePayload.authorName = updatedData.username;
+        }
+
+        // Update Posts
         const postsQuery = query(collection(db, 'posts'), where('authorId', '==', selectedUser.uid));
         const postsSnapshot = await getDocs(postsQuery);
         postsSnapshot.forEach(postDoc => {
-            const updatePayload: any = { authorName: updatedData.username };
-            if (updatedData.department) updatePayload.authorDepartment = updatedData.department;
-            if (updatedData.designation) updatePayload.authorDesignation = updatedData.designation;
-            else if (updatedData.designation === null) updatePayload.authorDesignation = null;
-            batch.update(postDoc.ref, updatePayload);
+            const postUpdatePayload = {...updatePayload};
+            if (updatedData.department) postUpdatePayload.authorDepartment = updatedData.department;
+            if (updatedData.hasOwnProperty('designation')) { // Check if designation is explicitly being set (even to null/undefined)
+              postUpdatePayload.authorDesignation = updatedData.designation || null;
+            }
+            batch.update(postDoc.ref, postUpdatePayload);
         });
 
-        // Update events
+        // Update Events - Events only have authorName
         const eventsQuery = query(collection(db, 'events'), where('authorId', '==', selectedUser.uid));
         const eventsSnapshot = await getDocs(eventsQuery);
         eventsSnapshot.forEach(eventDoc => {
-            batch.update(eventDoc.ref, { 
-                authorName: updatedData.username,
-            });
+            if(updatedData.username) {
+              batch.update(eventDoc.ref, { authorName: updatedData.username });
+            }
         });
 
-        // Update resources
+        // Update Resources
         const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', selectedUser.uid));
         const resourcesSnapshot = await getDocs(resourcesQuery);
         resourcesSnapshot.forEach(resourceDoc => {
-            batch.update(resourceDoc.ref, { 
-                authorName: updatedData.username,
-            });
+            const resourceUpdatePayload = {...updatePayload};
+            if (updatedData.department) resourceUpdatePayload.department = updatedData.department;
+            batch.update(resourceDoc.ref, resourceUpdatePayload);
         });
         
         await batch.commit();
