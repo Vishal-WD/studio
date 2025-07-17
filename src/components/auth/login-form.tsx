@@ -24,7 +24,10 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
+  email: z.string().email({ message: "Invalid email address." }).refine(
+    (email) => email.endsWith('@klu.ac.in'),
+    { message: "Only @klu.ac.in emails are allowed." }
+  ),
   password: z.string().min(1, { message: "Password is required." }),
 });
 

@@ -39,7 +39,10 @@ import { DEPARTMENTS } from '@/lib/constants';
 import { Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').refine(
+    (email) => email.endsWith('@klu.ac.in'),
+    { message: "Only @klu.ac.in emails are allowed." }
+  ),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   username: z.string().min(1, 'Username is required'),
   department: z.string().min(1, 'Department is required'),
@@ -208,7 +211,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                 <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="user@example.com" {...field} />
+                                    <Input placeholder="user@klu.ac.in" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
