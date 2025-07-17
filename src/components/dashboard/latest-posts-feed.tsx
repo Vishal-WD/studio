@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, limit, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostItem, type Post } from './post-item';
@@ -12,12 +12,14 @@ import { Button } from '../ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 export function LatestPostsFeed() {
   const { userData, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (authLoading || !userData) {
@@ -30,13 +32,12 @@ export function LatestPostsFeed() {
     if (userData.department) {
       const postsQuery = query(
         collection(db, 'posts'),
-        where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc'),
-        limit(5)
+        where('authorDepartment', '==', userData.department)
       );
 
       const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
         setPosts(postsData);
         setLoading(false);
       }, (error) => {
@@ -53,7 +54,7 @@ export function LatestPostsFeed() {
       setLoading(false);
     }
     
-  }, [userData, authLoading]);
+  }, [userData, authLoading, toast]);
   
   const handleImageClick = (imageUrl: string) => {
     if (!imageUrl) return;
