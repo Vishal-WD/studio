@@ -170,7 +170,7 @@ export function DashboardHeader() {
 
   return (
     <>
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-primary px-4 md:px-6 text-primary-foreground">
       <div className="flex-1">
         <Logo />
       </div>
@@ -178,7 +178,7 @@ export function DashboardHeader() {
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative text-primary-foreground hover:bg-white/20 hover:text-primary-foreground">
               <Bell className="h-5 w-5" />
               {!loadingNotifications && filteredNotifications.length > 0 && (
                 <span className="absolute top-1 right-1 flex h-2 w-2">
@@ -234,7 +234,7 @@ export function DashboardHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-white/20 hover:text-primary-foreground">
               <UserCircle className="h-6 w-6" />
               <span className="sr-only">Toggle user menu</span>
             </Button>

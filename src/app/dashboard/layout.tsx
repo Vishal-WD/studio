@@ -43,13 +43,13 @@ const BottomNavBar = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 z-50 w-full h-16 border-t border-border bg-sky-500">
+    <div className="fixed bottom-0 left-0 z-50 w-full h-16 border-t border-border bg-primary">
       <div 
         className="grid h-full max-w-lg mx-auto font-medium"
         style={{ gridTemplateColumns: `repeat(${allMenuItems.length}, minmax(0, 1fr))` }}
       >
         {allMenuItems.map(item => (
-           <Link key={item.href} href={item.href} className={`inline-flex flex-col items-center justify-center px-5 group ${pathname === item.href ? 'text-white font-bold' : 'text-sky-100 hover:text-white'}`}>
+           <Link key={item.href} href={item.href} className={`inline-flex flex-col items-center justify-center px-5 group ${pathname === item.href ? 'text-white font-bold' : 'text-primary-foreground/70 hover:text-primary-foreground'}`}>
             {item.icon}
             <span className="text-xs">{item.label}</span>
         </Link>
