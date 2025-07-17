@@ -33,13 +33,8 @@ service cloud.firestore {
     }
 
     match /resources/{resourceId} {
-      // Allow a user to read a resource if they are an admin, in the same department, or the author of the resource.
-      allow read: if isAdmin() || (
-        request.auth != null && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department
-          || resource.data.authorId == request.auth.uid
-        )
-      );
+      // Allow a user to read a resource if they are an admin, in the same department, or the author.
+      allow read: if isAdmin() || (request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department || request.auth.uid == resource.data.authorId));
 
       // For creating a new resource
       allow create: if isAdmin() || (
