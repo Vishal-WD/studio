@@ -253,19 +253,19 @@ export default function ManageUsersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
             <Input 
               placeholder="Search by name, email, ID, or department..." 
-              className="pl-9 w-full md:w-1/2"
+              className="pl-9 w-full md:w-1/2 border-accent border-2 focus-visible:ring-0"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
         </div>
 
+    <Card className="shadow-md border-2 border-primary">
       <Tabs defaultValue="staff" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 rounded-none border-b-2 border-primary">
             <TabsTrigger value="staff">Staff ({staffUsers.length})</TabsTrigger>
             <TabsTrigger value="students">Students ({studentUsers.length})</TabsTrigger>
         </TabsList>
-        <TabsContent value="staff">
-            <Card className="shadow-md border-2 border-primary">
+        <TabsContent value="staff" className="mt-0">
                 <CardHeader>
                 <CardTitle>Staff</CardTitle>
                 <CardDescription>All faculty and admin users.</CardDescription>
@@ -320,10 +320,8 @@ export default function ManageUsersPage() {
                     </Table>
                 </div>
                 </CardContent>
-            </Card>
         </TabsContent>
-        <TabsContent value="students">
-            <Card className="shadow-md border-2 border-primary">
+        <TabsContent value="students" className="mt-0">
                 <CardHeader>
                 <CardTitle>Students</CardTitle>
                 <CardDescription>All student users.</CardDescription>
@@ -372,10 +370,9 @@ export default function ManageUsersPage() {
                     </Table>
                 </div>
                 </CardContent>
-            </Card>
         </TabsContent>
       </Tabs>
-
+    </Card>
     </div>
     
     <CreateUserDialog 
@@ -403,5 +400,3 @@ export default function ManageUsersPage() {
     </>
   );
 }
-
-    
