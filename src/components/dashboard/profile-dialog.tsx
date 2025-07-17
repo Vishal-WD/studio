@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Dialog,
@@ -14,13 +15,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, Mail, Building, Briefcase, BadgeCheck, UserCircle2, Hash, Group, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { ChangePasswordDialog } from './change-password-dialog';
 
 export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { userData, loading } = useAuth();
-  const { toast } = useToast();
+  const [isChangePasswordOpen, setChangePasswordOpen] = useState(false);
 
   const getInitials = (name = '') => {
     return name
@@ -34,32 +33,6 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
     if (!designation) return '';
     return designation.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
-
-  const handlePasswordReset = async () => {
-    if (!userData?.email) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not find your email address.',
-      });
-      return;
-    }
-    try {
-      await sendPasswordResetEmail(auth, userData.email);
-      toast({
-        title: 'Password Reset Email Sent',
-        description: `An email has been sent to ${userData.email} with instructions to reset your password.`,
-      });
-      onOpenChange(false); // Close the dialog after sending
-    } catch (error: any) {
-      console.error('Error sending password reset email:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Could not send password reset email.',
-      });
-    }
-  };
 
   const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string }) => {
     if (!value) return null;
@@ -75,6 +48,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -119,9 +93,9 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={handlePasswordReset}>
+              <Button variant="outline" onClick={() => setChangePasswordOpen(true)}>
                   <KeyRound className="mr-2 h-4 w-4" />
-                  Reset Password
+                  Change Password
               </Button>
             </DialogFooter>
           </>
@@ -130,5 +104,11 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
         )}
       </DialogContent>
     </Dialog>
+
+    <ChangePasswordDialog 
+        isOpen={isChangePasswordOpen}
+        onOpenChange={setChangePasswordOpen}
+    />
+    </>
   );
 }
