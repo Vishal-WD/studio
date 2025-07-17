@@ -84,9 +84,9 @@ export default function ManageUsersPage() {
   }, [authLoading, userData]);
 
   const filteredUsers = useMemo(() => {
-    if (!searchTerm) return users;
     return users.filter(user => {
       const term = searchTerm.toLowerCase();
+      if (!term) return true;
       return (
         user.username.toLowerCase().includes(term) ||
         user.email.toLowerCase().includes(term) ||
@@ -96,6 +96,10 @@ export default function ManageUsersPage() {
       );
     });
   }, [searchTerm, users]);
+  
+  const studentUsers = useMemo(() => filteredUsers.filter(u => u.role === 'student'), [filteredUsers]);
+  const staffUsers = useMemo(() => filteredUsers.filter(u => u.role === 'faculty' || u.role === 'admin'), [filteredUsers]);
+
 
   const handleEditClick = (user: User) => {
     setSelectedUser(user);
@@ -231,10 +235,11 @@ export default function ManageUsersPage() {
 
   return (
     <>
-    <div className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
+          <p className="text-foreground">View and manage all users in the system.</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <PlusCircle className="mr-2" />
@@ -242,19 +247,20 @@ export default function ManageUsersPage() {
         </Button>
       </div>
 
-      <Card className="shadow-md border-2 border-primary">
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>A list of all users in the system.</CardDescription>
-          <div className="relative pt-4">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
+       <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
             <Input 
               placeholder="Search by name, email, ID, or department..." 
-              className="pl-8 w-full md:w-1/3"
+              className="pl-9 w-full md:w-1/2"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
+        </div>
+
+      <Card className="shadow-md border-2 border-primary">
+        <CardHeader>
+          <CardTitle>Staff</CardTitle>
+          <CardDescription>All faculty and admin users.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -266,13 +272,13 @@ export default function ManageUsersPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Designation</TableHead>
                   <TableHead>Department</TableHead>
-                  <TableHead>ID (Reg/Staff)</TableHead>
+                  <TableHead>Staff ID</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((u) => (
+                {staffUsers.length > 0 ? (
+                  staffUsers.map((u) => (
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.username}</TableCell>
                       <TableCell>{u.email}</TableCell>
@@ -281,7 +287,7 @@ export default function ManageUsersPage() {
                       </TableCell>
                        <TableCell>{getDesignationDisplay(u)}</TableCell>
                       <TableCell>{u.department}</TableCell>
-                      <TableCell>{u.role === 'student' ? u.regno : u.staffId}</TableCell>
+                      <TableCell>{u.staffId}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Edit User">
                           <Edit className="h-4 w-4" />
@@ -298,7 +304,7 @@ export default function ManageUsersPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center">
-                      No users found.
+                      No staff members found.
                     </TableCell>
                   </TableRow>
                 )}
@@ -307,6 +313,58 @@ export default function ManageUsersPage() {
           </div>
         </CardContent>
       </Card>
+      
+      <Card className="shadow-md border-2 border-primary">
+        <CardHeader>
+          <CardTitle>Students</CardTitle>
+          <CardDescription>All student users.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Registration No.</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {studentUsers.length > 0 ? (
+                  studentUsers.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.username}</TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell>{u.department}</TableCell>
+                      <TableCell>{u.regno}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Edit User">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                         <Button variant="ghost" size="icon" className="mr-2" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)} title="Delete User">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      No students found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
     </div>
     
     <CreateUserDialog 
