@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -28,8 +29,15 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if request.auth != null;
       
-      // Admins can write anything. Users can create/delete their own events.
-      allow write: if isAdmin() || (request.auth.uid == resource.data.authorId);
+      // Admins and authorized faculty can create events.
+      allow create: if request.auth != null && (
+          isAdmin() || 
+          (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty' && 
+          request.resource.data.authorId == request.auth.uid)
+      );
+
+      // Admins or the original author can update/delete their own events.
+      allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
     }
 
     match /resources/{resourceId} {
