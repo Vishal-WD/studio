@@ -22,21 +22,20 @@ service cloud.firestore {
     match /posts/{postId} {
       allow read: if request.auth != null;
       
-      // Admins can write anything. Users can create/delete their own posts.
-      allow write: if isAdmin() || (request.auth.uid == resource.data.authorId);
+      // For creating a new post
+      allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId);
+
+      // For updating or deleting an existing post
+      allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
     }
     
     match /events/{eventId} {
       allow read: if request.auth != null;
       
-      // Admins and authorized faculty can create events.
-      allow create: if request.auth != null && (
-          isAdmin() || 
-          (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty' && 
-          request.resource.data.authorId == request.auth.uid)
-      );
+      // For creating a new event
+      allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId);
 
-      // Admins or the original author can update/delete their own events.
+      // For updating or deleting an existing event
       allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
     }
 
