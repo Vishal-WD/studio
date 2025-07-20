@@ -194,6 +194,7 @@ export default function ResourcesPage() {
             <CardTitle className="text-lg">Quick Links</CardTitle>
         </CardHeader>
         <CardContent>
+           <div className="space-y-2">
             <Link 
                 href="https://sis.kalasalingam.ac.in/login" 
                 target="_blank" 
@@ -203,6 +204,25 @@ export default function ResourcesPage() {
                 <p className="font-medium">SIS LOGIN</p>
                 <ExternalLink className="h-5 w-5 text-foreground" />
             </Link>
+             <Link 
+                href="https://lms.kalasalingam.ac.in/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center justify-between p-4 -m-4 rounded-lg hover:bg-muted transition-colors"
+            >
+                <p className="font-medium">KALVI LMS</p>
+                <ExternalLink className="h-5 w-5 text-foreground" />
+            </Link>
+             <Link 
+                href="https://kalvi.kalasalingam.ac.in/klustudentportal/students/loginManager/youLogin.jsp" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center justify-between p-4 -m-4 rounded-lg hover:bg-muted transition-colors"
+            >
+                <p className="font-medium">KALVI PORTAL</p>
+                <ExternalLink className="h-5 w-5 text-foreground" />
+            </Link>
+           </div>
         </CardContent>
       </Card>
       
