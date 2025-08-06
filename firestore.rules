@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -6,6 +5,10 @@ service cloud.firestore {
     // Check if the requesting user is an admin
     function isAdmin() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isFaculty() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty';
     }
 
     match /users/{userId} {
@@ -23,7 +26,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       
       // For creating a new post
-      allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId);
+      allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']);
 
       // For updating or deleting an existing post
       allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
@@ -32,10 +35,10 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if request.auth != null;
       
-      // For creating a new event
-      allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId);
+      // Admins or faculty can create events. Author must match requesting user.
+      allow create: if (isAdmin() || isFaculty()) && request.auth.uid == request.resource.data.authorId;
 
-      // For updating or deleting an existing event
+      // Admins or the original author can update or delete events.
       allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
     }
 
