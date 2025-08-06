@@ -212,8 +212,8 @@ export function CreatePostDialog() {
               </div>
             )}
           </div>
-          <DialogFooter className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
+          <DialogFooter className="sm:justify-between items-center">
+            <div className="flex items-center gap-2 text-xs text-foreground">
                 <input 
                     type="file" 
                     ref={fileInputRef} 
@@ -223,14 +223,15 @@ export function CreatePostDialog() {
                 />
                 <Button 
                     type="button" 
-                    variant="outline" 
+                    variant="outline"
+                    size="sm"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isSubmitting}
                 >
                     <Paperclip className="mr-2 h-4 w-4" />
                     Attach File
                 </Button>
-                <p className="text-xs text-foreground">Max file size: 350KB</p>
+                <span>Max file size: 350KB</span>
             </div>
             <Button type="submit" disabled={isSubmitting || !content.trim()}>
               {isSubmitting ? (
