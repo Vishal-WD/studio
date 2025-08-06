@@ -31,7 +31,7 @@ interface ResourceUploadDialogProps {
   existingResource?: Resource | null;
 }
 
-const MAX_FILE_SIZE_MB = 0.9; // ~900KB to be safe with Base64 encoding overhead
+const MAX_FILE_SIZE_BYTES = 350 * 1024; // 350KB
 const MAX_BASE64_SIZE_BYTES = 1048487; // Firestore's 1MB limit for a field
 
 const formSchema = z.object({
@@ -76,8 +76,8 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        toast({ variant: 'destructive', title: 'Error', description: `File size must be less than ${MAX_FILE_SIZE_MB}MB.` });
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast({ variant: 'destructive', title: 'Error', description: `File size must be less than 350KB.` });
         return;
       }
       form.setValue('fileName', file.name, { shouldValidate: true });
@@ -217,7 +217,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
                     <p className="mt-2 text-sm text-muted-foreground">
                     {attachment ? 'File selected. Click to change.' : (isEditing ? 'Click to replace file' : 'Click to select a file')}
                     </p>
-                    <p className="text-xs text-muted-foreground/80 mt-1">Max file size: {MAX_FILE_SIZE_MB}MB</p>
+                    <p className="text-xs text-muted-foreground/80 mt-1">Max file size: 350KB</p>
                 </div>
                 </div>
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} disabled={isSubmitting}/>

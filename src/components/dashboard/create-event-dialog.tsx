@@ -26,7 +26,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const MAX_IMAGE_SIZE_MB = 5;
+const MAX_IMAGE_SIZE_BYTES = 350 * 1024; // 350KB
 const MAX_BASE64_SIZE_BYTES = 1048487; // Firestore's 1MB limit for a field
 const COMPRESSION_QUALITY = 0.7; // 70% quality
 const MAX_IMAGE_DIMENSION = 1280; // Max width/height of 1280px
@@ -47,8 +47,8 @@ export function CreateEventDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Error", description: `Image file size should not exceed ${MAX_IMAGE_SIZE_MB}MB.` });
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        toast({ variant: "destructive", title: "Error", description: `Image file size should not exceed 350KB.` });
         return;
       }
 
@@ -296,23 +296,26 @@ export function CreateEventDialog() {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                onChange={handleFileChange}
-                accept="image/png, image/jpeg, image/gif"
-            />
-            <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isSubmitting}
-            >
-                <Paperclip className="mr-2 h-4 w-4" />
-                Add Image
-            </Button>
+          <DialogFooter className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={handleFileChange}
+                  accept="image/png, image/jpeg, image/gif"
+              />
+              <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+              >
+                  <Paperclip className="mr-2 h-4 w-4" />
+                  Add Image
+              </Button>
+               <p className="text-xs text-foreground">Max file size: 350KB</p>
+            </div>
             <Button type="submit" disabled={isSubmitting || !title.trim() || !description.trim() || !location.trim() || !date}>
               {isSubmitting ? (
                 <>

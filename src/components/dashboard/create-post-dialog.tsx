@@ -21,7 +21,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import Image from "next/image";
 
-const MAX_FILE_SIZE_MB = 0.7; // 700KB to be safe with Base64 encoding overhead
+const MAX_FILE_SIZE_BYTES = 350 * 1024; // 350KB
 const MAX_BASE64_SIZE_BYTES = 1048487; // Firestore's 1MB limit for a field
 
 interface FileAttachment {
@@ -42,8 +42,8 @@ export function CreatePostDialog() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        toast({ variant: "destructive", title: "Error", description: `File size should not exceed ${MAX_FILE_SIZE_MB}MB.` });
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast({ variant: "destructive", title: "Error", description: `File size should not exceed 350KB.` });
         return;
       }
 
@@ -212,23 +212,26 @@ export function CreatePostDialog() {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                onChange={handleFileChange}
-                accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-            />
-            <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isSubmitting}
-            >
-                <Paperclip className="mr-2 h-4 w-4" />
-                Attach File
-            </Button>
+          <DialogFooter className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    onChange={handleFileChange}
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                />
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isSubmitting}
+                >
+                    <Paperclip className="mr-2 h-4 w-4" />
+                    Attach File
+                </Button>
+                <p className="text-xs text-foreground">Max file size: 350KB</p>
+            </div>
             <Button type="submit" disabled={isSubmitting || !content.trim()}>
               {isSubmitting ? (
                 <>
