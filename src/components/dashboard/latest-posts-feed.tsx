@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostItem, type Post } from './post-item';
@@ -32,12 +32,13 @@ export function LatestPostsFeed() {
     if (userData.department) {
       const postsQuery = query(
         collection(db, 'posts'),
-        where('authorDepartment', '==', userData.department)
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc'),
+        limit(5)
       );
 
       const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
         setPosts(postsData);
         setLoading(false);
       }, (error) => {
@@ -83,7 +84,7 @@ export function LatestPostsFeed() {
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
-              <p className="text-center text-muted-foreground">No recent posts found for you.</p>
+              <p className="text-center text-foreground">No recent posts found for you.</p>
             </CardContent>
           </Card>
         )}
