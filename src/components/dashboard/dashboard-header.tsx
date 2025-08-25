@@ -20,13 +20,13 @@ import { useToast } from "@/hooks/use-toast";
 import { ProfileDialog } from "./profile-dialog";
 import { Logo } from '../logo';
 import { collection, query, onSnapshot, orderBy, limit, where, serverTimestamp, updateDoc, doc, Timestamp } from 'firebase/firestore';
-import type { Post } from '@/components/dashboard/post-item';
+import type { Announcement } from '@/components/dashboard/announcement-item';
 import type { Event } from '@/components/dashboard/event-item';
 import Link from "next/link";
 import { formatDistanceToNow } from 'date-fns';
 import { MessageSquare, Calendar } from "lucide-react";
 
-type Notification = (Post & { type: 'post' }) | (Event & { type: 'event' });
+type Notification = (Announcement & { type: 'announcement' }) | (Event & { type: 'event' });
 
 export function DashboardHeader() {
   const { user, userData, loading: authLoading } = useAuth();
@@ -46,14 +46,14 @@ export function DashboardHeader() {
 
     const notificationsLastClearedAt = userData.notificationsLastClearedAt as Timestamp | undefined;
 
-    const basePostsQuery = query(
-        collection(db, 'posts'), 
+    const baseAnnouncementsQuery = query(
+        collection(db, 'announcements'), 
         orderBy('createdAt', 'desc'),
         limit(10)
     );
-    const postsQuery = notificationsLastClearedAt 
-        ? query(basePostsQuery, where('createdAt', '>', notificationsLastClearedAt))
-        : basePostsQuery;
+    const announcementsQuery = notificationsLastClearedAt 
+        ? query(baseAnnouncementsQuery, where('createdAt', '>', notificationsLastClearedAt))
+        : baseAnnouncementsQuery;
 
     const baseEventsQuery = query(
         collection(db, 'events'), 
@@ -65,13 +65,13 @@ export function DashboardHeader() {
         : baseEventsQuery;
 
 
-    const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-        const postsData = snapshot.docs
-          .map(doc => ({ id: doc.id, type: 'post', ...doc.data() } as Notification))
-          .filter(post => post.createdAt); // Ensure createdAt exists
+    const unsubscribeAnnouncements = onSnapshot(announcementsQuery, (snapshot) => {
+        const announcementsData = snapshot.docs
+          .map(doc => ({ id: doc.id, type: 'announcement', ...doc.data() } as Notification))
+          .filter(announcement => announcement.createdAt); // Ensure createdAt exists
         setNotifications(prev => {
-            const otherNotifications = prev.filter(n => n.type !== 'post');
-            const all = [...otherNotifications, ...postsData].sort((a,b) => {
+            const otherNotifications = prev.filter(n => n.type !== 'announcement');
+            const all = [...otherNotifications, ...announcementsData].sort((a,b) => {
                 if (!a.createdAt || !b.createdAt) return 0;
                 return b.createdAt.seconds - a.createdAt.seconds;
             });
@@ -79,7 +79,7 @@ export function DashboardHeader() {
         });
         setLoadingNotifications(false);
     }, (error) => {
-        console.error("Error fetching post notifications:", error);
+        console.error("Error fetching announcement notifications:", error);
         setLoadingNotifications(false);
     });
 
@@ -102,7 +102,7 @@ export function DashboardHeader() {
     });
 
     return () => {
-        unsubscribePosts();
+        unsubscribeAnnouncements();
         unsubscribeEvents();
     };
 
@@ -117,10 +117,10 @@ export function DashboardHeader() {
         if (notification.type === 'event') {
             return true; // Everyone sees event notifications
         }
-        if (notification.type === 'post') {
-            // Dean sees all posts
+        if (notification.type === 'announcement') {
+            // Dean sees all announcements
             if (userData.designation === 'dean') return true;
-            // Admins, faculty, students see posts from their own department
+            // Admins, faculty, students see announcements from their own department
             if (userData.department) {
                 return notification.authorDepartment === userData.department;
             }
@@ -197,15 +197,15 @@ export function DashboardHeader() {
             ) : filteredNotifications.length > 0 ? (
                 filteredNotifications.map(notification => (
                     <DropdownMenuItem key={`${notification.type}-${notification.id}`} asChild>
-                         <Link href={notification.type === 'post' ? `/dashboard/posts` : `/dashboard/events/${notification.id}`} className="block w-full cursor-pointer">
+                         <Link href={notification.type === 'announcement' ? `/dashboard/announcements` : `/dashboard/events/${notification.id}`} className="block w-full cursor-pointer">
                             <div className="flex items-start gap-3">
-                                {notification.type === 'post' ? <MessageSquare className="h-4 w-4 mt-1 text-foreground" /> : <Calendar className="h-4 w-4 mt-1 text-foreground" />}
+                                {notification.type === 'announcement' ? <MessageSquare className="h-4 w-4 mt-1 text-foreground" /> : <Calendar className="h-4 w-4 mt-1 text-foreground" />}
                                 <div>
                                     <p className="text-sm font-medium line-clamp-1">
-                                        {notification.type === 'post' ? 'New Post' : notification.title}
+                                        {notification.type === 'announcement' ? 'New Announcement' : notification.title}
                                     </p>
                                     <p className="text-xs text-foreground line-clamp-2">
-                                        {notification.type === 'post' ? notification.content : `From ${notification.authorName}`}
+                                        {notification.type === 'announcement' ? notification.content : `From ${notification.authorName}`}
                                     </p>
                                     <p className="text-xs text-foreground/80 mt-1">
                                         {formatDistanceToNow(new Date(notification.createdAt.seconds * 1000), { addSuffix: true })}

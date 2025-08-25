@@ -2,7 +2,7 @@
 "use client";
 
 import { LatestEventsFeed } from "@/components/dashboard/latest-events-feed";
-import { LatestPostsFeed } from "@/components/dashboard/latest-posts-feed";
+import { LatestAnnouncementsFeed } from "@/components/dashboard/latest-announcements-feed";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -21,7 +21,7 @@ export default function DashboardPage() {
       
       <div className="space-y-8">
           <LatestEventsFeed />
-          <LatestPostsFeed />
+          <LatestAnnouncementsFeed />
       </div>
     </div>
   );

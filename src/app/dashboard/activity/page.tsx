@@ -14,14 +14,14 @@ import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirma
 import { useToast } from '@/hooks/use-toast';
 import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
 import Link from 'next/link';
-import { PostItem, type Post as PostType } from '@/components/dashboard/post-item';
+import { AnnouncementItem, type Announcement as AnnouncementType } from '@/components/dashboard/announcement-item';
 import { type Event as EventType } from '@/components/dashboard/event-item';
 import type { Resource as ResourceType } from '@/app/dashboard/resources/page';
 
-type PostActivity = PostType & { type: 'post' };
+type AnnouncementActivity = AnnouncementType & { type: 'announcement' };
 type EventActivity = EventType & { type: 'event' };
 type ResourceActivity = ResourceType & { type: 'resource' };
-type Activity = PostActivity | EventActivity | ResourceActivity;
+type Activity = AnnouncementActivity | EventActivity | ResourceActivity;
 
 const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, onDelete: (eventId: string) => void, onImageClick: (imageUrl: string) => void }) => {
     const formattedDate = event.createdAt ? formatDistanceToNow(new Date(event.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
@@ -101,7 +101,7 @@ export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'post' | 'event' | 'resource'} | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'announcement' | 'event' | 'resource'} | null>(null);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { toast } = useToast();
@@ -112,13 +112,13 @@ export default function ActivityPage() {
     if (user && userData) {
       setLoading(true);
       
-      const postsQuery = query(collection(db, 'posts'), where('authorId', '==', user.uid));
+      const announcementsQuery = query(collection(db, 'announcements'), where('authorId', '==', user.uid));
       const eventsQuery = query(collection(db, 'events'), where('authorId', '==', user.uid));
       const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', user.uid));
 
       const unsubscribers: (() => void)[] = [];
 
-      const handleSnapshot = (snapshot: any, type: 'post' | 'event' | 'resource') => {
+      const handleSnapshot = (snapshot: any, type: 'announcement' | 'event' | 'resource') => {
         const data = snapshot.docs.map((doc: any) => ({ id: doc.id, type, ...doc.data() }));
         setActivities(prev => {
             const otherActivities = prev.filter(a => a.type !== type);
@@ -128,7 +128,7 @@ export default function ActivityPage() {
         setLoading(false);
       }
 
-      unsubscribers.push(onSnapshot(postsQuery, (snap) => handleSnapshot(snap, 'post')));
+      unsubscribers.push(onSnapshot(announcementsQuery, (snap) => handleSnapshot(snap, 'announcement')));
       unsubscribers.push(onSnapshot(eventsQuery, (snap) => handleSnapshot(snap, 'event')));
       unsubscribers.push(onSnapshot(resourcesQuery, (snap) => handleSnapshot(snap, 'resource')));
 
@@ -141,7 +141,7 @@ export default function ActivityPage() {
     }
   }, [user, userData, authLoading]);
   
-  const handleDeleteClick = (id: string, type: 'post' | 'event' | 'resource') => {
+  const handleDeleteClick = (id: string, type: 'announcement' | 'event' | 'resource') => {
     setItemToDelete({ id, type });
     setDeleteDialogOpen(true);
   };
@@ -154,7 +154,7 @@ export default function ActivityPage() {
     if (!itemToDelete) return;
 
     const { id, type } = itemToDelete;
-    const collectionName = type === 'post' ? 'posts' : type === 'event' ? 'events' : 'resources';
+    const collectionName = type === 'announcement' ? 'announcements' : type === 'event' ? 'events' : 'resources';
 
     try {
         await deleteDoc(doc(db, collectionName, id));
@@ -185,13 +185,13 @@ export default function ActivityPage() {
           </>
         ) : activities.length > 0 ? (
           activities.map(activity => {
-            if (activity.type === 'post') {
+            if (activity.type === 'announcement') {
                 return (
-                    <PostItem 
-                        key={`post-${activity.id}`} 
-                        post={activity} 
+                    <AnnouncementItem 
+                        key={`announcement-${activity.id}`} 
+                        announcement={activity} 
                         onImageClick={handleImageClick}
-                        onDelete={() => handleDeleteClick(activity.id, 'post')}
+                        onDelete={() => handleDeleteClick(activity.id, 'announcement')}
                     />
                 )
             }
@@ -207,7 +207,7 @@ export default function ActivityPage() {
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
               <div className="text-center text-foreground">
-                <p>You haven't created any posts, events, or resources yet.</p>
+                <p>You haven't created any announcements, events, or resources yet.</p>
               </div>
             </CardContent>
           </Card>

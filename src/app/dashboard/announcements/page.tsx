@@ -5,50 +5,50 @@ import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent } from '@/components/ui/card';
-import { CreatePostDialog } from '@/components/dashboard/create-post-dialog';
+import { CreateAnnouncementDialog } from '@/components/dashboard/create-announcement-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
-import { PostItem, type Post } from '@/components/dashboard/post-item';
+import { AnnouncementItem, type Announcement } from '@/components/dashboard/announcement-item';
 import { useToast } from '@/hooks/use-toast';
 
-export default function PostsPage() {
+export default function AnnouncementsPage() {
   const { userData, loading: authLoading } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (authLoading || !userData) {
-      if (!authLoading) setLoadingPosts(false);
+      if (!authLoading) setLoadingAnnouncements(false);
       return;
     };
 
-    setLoadingPosts(true);
+    setLoadingAnnouncements(true);
 
     if (userData.department) {
-      const postsQuery = query(
-        collection(db, 'posts'), 
+      const announcementsQuery = query(
+        collection(db, 'announcements'), 
         where('authorDepartment', '==', userData.department)
       );
       
-      const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
+      const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
+        const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement))
             .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
-        setPosts(postsData);
-        setLoadingPosts(false);
+        setAnnouncements(announcementsData);
+        setLoadingAnnouncements(false);
       }, (error) => {
-        console.error("Error fetching posts:", error);
-        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch posts. You may need to have an index created in Firestore."})
-        setLoadingPosts(false);
+        console.error("Error fetching announcements:", error);
+        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch announcements. You may need to have an index created in Firestore."})
+        setLoadingAnnouncements(false);
       });
       
       return () => unsubscribe();
     } else {
-      setPosts([]);
-      setLoadingPosts(false);
+      setAnnouncements([]);
+      setLoadingAnnouncements(false);
     }
 
   }, [userData, authLoading, toast]);
@@ -57,36 +57,36 @@ export default function PostsPage() {
     setFocusedImage(imageUrl);
   };
 
-  const canCreatePost = userData?.designation === 'dean' || userData?.designation === 'hod';
+  const canCreateAnnouncement = userData?.designation === 'dean' || userData?.designation === 'hod';
 
   return (
     <>
     <div className="max-w-3xl mx-auto">
        <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-headline font-bold">Community Posts</h1>
+          <h1 className="text-3xl font-headline font-bold">Community Announcements</h1>
         </div>
         {authLoading ? (
-            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-44" />
         ) : (
-            canCreatePost && <CreatePostDialog />
+            canCreateAnnouncement && <CreateAnnouncementDialog />
         )}
       </div>
     
       <div className="space-y-4">
-        {loadingPosts || authLoading ? (
+        {loadingAnnouncements || authLoading ? (
           <>
             <Skeleton className="h-48 w-full" />
             <Skeleton className="h-48 w-full" />
             <Skeleton className="h-48 w-full" />
           </>
-        ) : posts.length > 0 ? (
-          posts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)
+        ) : announcements.length > 0 ? (
+          announcements.map(announcement => <AnnouncementItem key={announcement.id} announcement={announcement} onImageClick={handleImageClick} />)
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
               <div className="text-center text-foreground">
-                <p>No posts found for you yet.</p>
+                <p>No announcements found for you yet.</p>
                  <p className="text-sm">If you are a HOD or Dean, try creating one!</p>
               </div>
             </CardContent>

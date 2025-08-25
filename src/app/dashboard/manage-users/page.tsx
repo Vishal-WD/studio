@@ -145,16 +145,16 @@ export default function ManageUsersPage() {
             updatePayload.authorName = updatedData.username;
         }
 
-        // Update Posts
-        const postsQuery = query(collection(db, 'posts'), where('authorId', '==', selectedUser.uid));
-        const postsSnapshot = await getDocs(postsQuery);
-        postsSnapshot.forEach(postDoc => {
-            const postUpdatePayload = {...updatePayload};
-            if (updatedData.department) postUpdatePayload.authorDepartment = updatedData.department;
+        // Update Announcements
+        const announcementsQuery = query(collection(db, 'announcements'), where('authorId', '==', selectedUser.uid));
+        const announcementsSnapshot = await getDocs(announcementsQuery);
+        announcementsSnapshot.forEach(announcementDoc => {
+            const announcementUpdatePayload = {...updatePayload};
+            if (updatedData.department) announcementUpdatePayload.authorDepartment = updatedData.department;
             if (updatedData.hasOwnProperty('designation')) { 
-              postUpdatePayload.authorDesignation = updatedData.designation || null;
+              announcementUpdatePayload.authorDesignation = updatedData.designation || null;
             }
-            batch.update(postDoc.ref, postUpdatePayload);
+            batch.update(announcementDoc.ref, announcementUpdatePayload);
         });
 
         // Update Events
@@ -197,29 +197,29 @@ export default function ManageUsersPage() {
 
         // Function to delete a file from storage if it exists
         const deleteStorageFile = async (fileUrl: string | undefined) => {
-            if (!fileUrl || !fileUrl.startsWith('data:')) {
-                // If it's a real storage URL, delete it. Base64 strings are skipped.
-                // This logic may need refinement if you switch to gs:// URLs
-                return; 
-            }
+            if (!fileUrl) return;
             try {
-                // This assumes that data URLs are not stored in Firebase Storage and can be ignored.
-                // If you were to upload to Firebase Storage, you'd extract the path and delete.
-                // e.g. const fileRef = ref(storage, path); await deleteObject(fileRef);
+                // For data URIs, there's nothing to delete in storage.
+                if (fileUrl.startsWith('data:')) {
+                    return; 
+                }
+                // For gs:// or https:// URLs from Firebase Storage
+                const fileRef = ref(storage, fileUrl);
+                await deleteObject(fileRef);
             } catch (error: any) {
-                // Log and ignore errors for files that might already be deleted
+                // Log and ignore errors for files that might already be deleted or don't exist.
                 if (error.code !== 'storage/object-not-found') {
                     console.error("Error deleting file from storage:", error);
                 }
             }
         };
 
-        // Delete user's posts and associated files
-        const postsQuery = query(collection(db, 'posts'), where('authorId', '==', uid));
-        const postsSnapshot = await getDocs(postsQuery);
-        for (const postDoc of postsSnapshot.docs) {
-            await deleteStorageFile(postDoc.data().fileUrl);
-            batch.delete(postDoc.ref);
+        // Delete user's announcements and associated files
+        const announcementsQuery = query(collection(db, 'announcements'), where('authorId', '==', uid));
+        const announcementsSnapshot = await getDocs(announcementsQuery);
+        for (const announcementDoc of announcementsSnapshot.docs) {
+            await deleteStorageFile(announcementDoc.data().fileUrl);
+            batch.delete(announcementDoc.ref);
         }
 
         // Delete user's events and associated images
@@ -463,5 +463,7 @@ export default function ManageUsersPage() {
     </>
   );
 }
+
+    
 
     

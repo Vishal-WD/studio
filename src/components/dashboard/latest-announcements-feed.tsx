@@ -2,22 +2,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, limit, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PostItem, type Post } from './post-item';
+import { AnnouncementItem, type Announcement } from './announcement-item';
 import { Card, CardContent } from '../ui/card';
-import { ImageFocusDialog } from './image-focus-dialog';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { ImageFocusDialog } from './image-focus-dialog';
 
-
-export function LatestPostsFeed() {
+export function LatestAnnouncementsFeed() {
   const { userData, loading: authLoading } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
   const { toast } = useToast();
@@ -29,30 +28,28 @@ export function LatestPostsFeed() {
     }
     setLoading(true);
 
-    // Users should only see posts from their own department.
     if (userData.department) {
-      const postsQuery = query(
-        collection(db, 'posts'),
+      const announcementsQuery = query(
+        collection(db, 'announcements'),
         where('authorDepartment', '==', userData.department),
-        limit(5)
+        orderBy('createdAt', 'desc'),
+        limit(3)
       );
 
-      const unsubscribe = onSnapshot(postsQuery, (querySnapshot) => {
-        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post))
-          .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
-        setPosts(postsData);
+      const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
+        const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
+        setAnnouncements(announcementsData);
         setLoading(false);
       }, (error) => {
-        console.error("Error fetching latest posts:", error);
-        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch posts. You may need to have an index created in Firestore."})
+        console.error("Error fetching latest announcements:", error);
+        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch announcements. You may need to have an index created in Firestore."})
         setLoading(false);
       });
   
       return () => unsubscribe();
 
     } else {
-      // If user has no department, they see no posts.
-      setPosts([]);
+      setAnnouncements([]);
       setLoading(false);
     }
     
@@ -67,9 +64,9 @@ export function LatestPostsFeed() {
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-            <h2 className="font-headline text-2xl font-semibold">Latest Posts</h2>
+            <h2 className="font-headline text-2xl font-semibold">Latest Announcements</h2>
             <Button asChild variant="link">
-            <Link href="/dashboard/posts">
+            <Link href="/dashboard/announcements">
                 View All <ArrowRight className="ml-2" />
             </Link>
             </Button>
@@ -78,14 +75,14 @@ export function LatestPostsFeed() {
             <div className="space-y-4">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
             </div>
-        ) : posts.length > 0 ? (
+        ) : announcements.length > 0 ? (
           <div className="space-y-4">
-            {posts.map(post => <PostItem key={post.id} post={post} onImageClick={handleImageClick} />)}
+            {announcements.map(announcement => <AnnouncementItem key={announcement.id} announcement={announcement} onImageClick={handleImageClick} />)}
           </div>
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
-              <p className="text-center text-foreground">No recent posts found for you.</p>
+              <p className="text-center text-foreground">No recent announcements found for you.</p>
             </CardContent>
           </Card>
         )}

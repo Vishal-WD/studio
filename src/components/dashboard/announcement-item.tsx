@@ -9,7 +9,7 @@ import type { MouseEventHandler } from 'react';
 import { Button } from '../ui/button';
 import { Download, File as FileIcon, Trash2 } from 'lucide-react';
 
-export interface Post {
+export interface Announcement {
   id: string;
   authorName: string;
   authorId: string;
@@ -25,51 +25,51 @@ export interface Post {
   };
 }
 
-interface PostItemProps {
-    post: Post;
+interface AnnouncementItemProps {
+    announcement: Announcement;
     onImageClick: (imageUrl: string) => void;
     onDelete?: () => void; // Optional delete handler
 }
 
 
-export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
+export const AnnouncementItem = ({ announcement, onImageClick, onDelete }: AnnouncementItemProps) => {
   const getInitials = (name = '') => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
   };
   
-  const formattedDate = post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
+  const formattedDate = announcement.createdAt ? formatDistanceToNow(new Date(announcement.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
 
   const getDesignationDisplay = () => {
-    if (!post.authorDesignation) return null;
-    const designation = post.authorDesignation.replace('_', ' ');
-    if ((post.authorDesignation === 'dean' || post.authorDesignation === 'hod') && post.authorDepartment) {
-      return <p className="text-xs text-foreground capitalize">{designation} of {post.authorDepartment}</p>;
+    if (!announcement.authorDesignation) return null;
+    const designation = announcement.authorDesignation.replace('_', ' ');
+    if ((announcement.authorDesignation === 'dean' || announcement.authorDesignation === 'hod') && announcement.authorDepartment) {
+      return <p className="text-xs text-foreground capitalize">{designation} of {announcement.authorDepartment}</p>;
     }
     return <p className="text-xs text-foreground capitalize">{designation}</p>;
   }
 
   const handleImageClick: MouseEventHandler<HTMLDivElement> = (e) => {
     e.stopPropagation();
-    if(post.fileUrl) {
-        onImageClick(post.fileUrl);
+    if(announcement.fileUrl) {
+        onImageClick(announcement.fileUrl);
     }
   }
 
   const handleDownload = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!post.fileUrl || !post.fileName) return;
+    if (!announcement.fileUrl || !announcement.fileName) return;
     const link = document.createElement('a');
-    link.href = post.fileUrl;
-    link.download = post.fileName;
+    link.href = announcement.fileUrl;
+    link.download = announcement.fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
   
-  const isImage = post.fileType?.startsWith('image/');
+  const isImage = announcement.fileType?.startsWith('image/');
   
   const handleContainerClick = () => {
-    if (post.fileUrl && !isImage) {
+    if (announcement.fileUrl && !isImage) {
         handleDownload();
     }
   }
@@ -81,11 +81,11 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
 
   return (
     <Card className="shadow-sm overflow-hidden border-2 border-primary">
-        {post.fileUrl && isImage && (
+        {announcement.fileUrl && isImage && (
             <div className="w-full h-64 relative bg-muted cursor-pointer border-b" onClick={handleImageClick}>
                 <Image
-                    src={post.fileUrl}
-                    alt="Post image"
+                    src={announcement.fileUrl}
+                    alt="Announcement image"
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -94,12 +94,12 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
         )}
       <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
         <Avatar>
-          <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+          <AvatarFallback>{getInitials(announcement.authorName)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-semibold">{post.authorName}</p>
+              <p className="font-semibold">{announcement.authorName}</p>
               {getDesignationDisplay()}
             </div>
             <div className="flex items-center gap-2">
@@ -114,18 +114,18 @@ export const PostItem = ({ post, onImageClick, onDelete }: PostItemProps) => {
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
-        <p className="whitespace-pre-wrap">{post.content}</p>
-        {post.fileUrl && !isImage && (
+        <p className="whitespace-pre-wrap">{announcement.content}</p>
+        {announcement.fileUrl && !isImage && (
             <div 
                 className="mt-4 block rounded-md border bg-muted/50 p-3 hover:bg-muted transition-colors cursor-pointer"
                 onClick={handleContainerClick}
-                title={`Download ${post.fileName}`}
+                title={`Download ${announcement.fileName}`}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 overflow-hidden">
                         <FileIcon className="h-6 w-6 shrink-0 text-foreground" />
-                        <p className="text-sm font-medium truncate" title={post.fileName}>
-                            {post.fileName}
+                        <p className="text-sm font-medium truncate" title={announcement.fileName}>
+                            {announcement.fileName}
                         </p>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => handleDownload(e)}>

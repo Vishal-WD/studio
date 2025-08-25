@@ -36,7 +36,7 @@ const BottomNavBar = () => {
   const allMenuItems = [
     { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
     { href: '/dashboard/events', icon: <Calendar />, label: 'Events' },
-    { href: '/dashboard/posts', icon: <MessageSquare />, label: 'Posts' },
+    { href: '/dashboard/announcements', icon: <MessageSquare />, label: 'Announcements' },
     { href: '/dashboard/resources', icon: <BookMarked />, label: 'Resources' },
     { href: '/dashboard/activity', icon: <Activity />, label: 'Activity' },
     ...(userData?.role === 'admin' ? [{ href: '/dashboard/manage-users', icon: <Users />, label: 'Users' }] : []),
