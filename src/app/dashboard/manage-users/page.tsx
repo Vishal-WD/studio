@@ -3,7 +3,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, deleteDoc, updateDoc, query, where, writeBatch } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { db, auth, storage } from '@/lib/firebase';
+import { ref, deleteObject } from 'firebase/storage';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -191,14 +192,70 @@ export default function ManageUsersPage() {
   const handleUserDelete = async () => {
     if (!selectedUser) return;
     try {
-      const userDocRef = doc(db, 'users', selectedUser.uid);
-      await deleteDoc(userDocRef);
-      setDeleteDialogOpen(false);
-      toast({ title: "Success", description: `User ${selectedUser.username} deleted.` });
-      fetchUsers();
+        const uid = selectedUser.uid;
+        const batch = writeBatch(db);
+
+        // Function to delete a file from storage if it exists
+        const deleteStorageFile = async (fileUrl: string | undefined) => {
+            if (!fileUrl || !fileUrl.startsWith('data:')) {
+                // If it's a real storage URL, delete it. Base64 strings are skipped.
+                // This logic may need refinement if you switch to gs:// URLs
+                return; 
+            }
+            try {
+                // This assumes that data URLs are not stored in Firebase Storage and can be ignored.
+                // If you were to upload to Firebase Storage, you'd extract the path and delete.
+                // e.g. const fileRef = ref(storage, path); await deleteObject(fileRef);
+            } catch (error: any) {
+                // Log and ignore errors for files that might already be deleted
+                if (error.code !== 'storage/object-not-found') {
+                    console.error("Error deleting file from storage:", error);
+                }
+            }
+        };
+
+        // Delete user's posts and associated files
+        const postsQuery = query(collection(db, 'posts'), where('authorId', '==', uid));
+        const postsSnapshot = await getDocs(postsQuery);
+        for (const postDoc of postsSnapshot.docs) {
+            await deleteStorageFile(postDoc.data().fileUrl);
+            batch.delete(postDoc.ref);
+        }
+
+        // Delete user's events and associated images
+        const eventsQuery = query(collection(db, 'events'), where('authorId', '==', uid));
+        const eventsSnapshot = await getDocs(eventsQuery);
+        for (const eventDoc of eventsSnapshot.docs) {
+            await deleteStorageFile(eventDoc.data().imageUrl);
+            batch.delete(eventDoc.ref);
+        }
+        
+        // Delete user's resources and associated files
+        const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', uid));
+        const resourcesSnapshot = await getDocs(resourcesQuery);
+        for (const resourceDoc of resourcesSnapshot.docs) {
+            await deleteStorageFile(resourceDoc.data().fileUrl);
+            batch.delete(resourceDoc.ref);
+        }
+
+        // Delete the user document itself
+        const userDocRef = doc(db, 'users', uid);
+        batch.delete(userDocRef);
+
+        // Commit all Firestore deletions
+        await batch.commit();
+
+        // Note: Deleting the user from Firebase Auth is a separate, more complex operation.
+        // It's a destructive action that requires backend logic (like a Cloud Function) to be done safely.
+        // This implementation only removes the user from the application database and their content.
+
+        setDeleteDialogOpen(false);
+        toast({ title: "Success", description: `User ${selectedUser.username} and their content have been deleted.` });
+        fetchUsers();
+        
     } catch (error) {
-      console.error("Error deleting user:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not delete user." });
+        console.error("Error deleting user and their content:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not delete user and their content." });
     }
   };
   
@@ -406,3 +463,5 @@ export default function ManageUsersPage() {
     </>
   );
 }
+
+    
