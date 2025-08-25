@@ -136,7 +136,7 @@ export default function ResourcesPage() {
     return () => unsubscribe();
   }, [authLoading, toast]);
 
-  const resources = useMemo(() => {
+  const departmentResources = useMemo(() => {
     if (!userData?.department) return [];
     return allResources.filter(r => r.department === userData.department);
   }, [allResources, userData]);
@@ -236,7 +236,7 @@ export default function ResourcesPage() {
             <CardContent>
                 {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
                     <ResourceList 
-                        resources={resources} 
+                        resources={departmentResources} 
                         type="academic_calendar" 
                         canManage={canManage}
                         onEdit={handleEditClick}
@@ -253,7 +253,7 @@ export default function ResourcesPage() {
             <CardContent>
                 {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
                     <ResourceList 
-                        resources={resources} 
+                        resources={departmentResources} 
                         type="exam_schedule" 
                         canManage={canManage}
                         onEdit={handleEditClick}
