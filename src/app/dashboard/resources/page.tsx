@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -103,7 +103,7 @@ const ResourceList = ({
 
 export default function ResourcesPage() {
   const { userData, loading: authLoading } = useAuth();
-  const [resources, setResources] = useState<Resource[]>([]);
+  const [allResources, setAllResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUploadOpen, setUploadOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
@@ -115,29 +115,31 @@ export default function ResourcesPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!userData?.department) {
-        setLoading(false);
-        return;
-    };
+    
+    setLoading(true);
 
     const q = query(
       collection(db, 'resources'), 
-      where('department', '==', userData.department),
       orderBy('createdAt', 'desc')
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const resourcesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Resource));
-      setResources(resourcesData);
+      setAllResources(resourcesData);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching resources:", error);
-      toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch resources. You may need to have an index created in Firestore."})
+      toast({ variant: 'destructive', title: "Error", description: "Could not fetch resources."})
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [userData, authLoading, toast]);
+  }, [authLoading, toast]);
+
+  const resources = useMemo(() => {
+    if (!userData?.department) return [];
+    return allResources.filter(r => r.department === userData.department);
+  }, [allResources, userData]);
 
   const canManage = useMemo(() => {
     return userData?.designation === 'hod' || userData?.designation === 'dean';

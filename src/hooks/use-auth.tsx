@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
@@ -9,6 +10,7 @@ import { useToast } from './use-toast';
 interface UserData {
   username?: string;
   role?: 'student' | 'faculty' | 'admin';
+  department?: string;
   fcmTokens?: string[];
   [key: string]: any;
 }

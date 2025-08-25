@@ -43,7 +43,7 @@ export function LatestAnnouncementsFeed() {
   }, [toast]);
   
   const announcements = useMemo(() => {
-    if (!userData) return [];
+    if (!userData?.department) return [];
     return allRecentAnnouncements.filter(announcement => {
         return announcement.authorDepartment === userData.department;
     }).slice(0, 3); // Limit to 3 for the feed
