@@ -25,10 +25,10 @@ service cloud.firestore {
     match /announcements/{announcementId} {
       allow read: if request.auth != null;
       
-      // For creating a new announcement
+      // For creating a new post
       allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']);
 
-      // For updating or deleting an existing announcement
+      // For updating or deleting an existing post
       allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
     }
     
@@ -43,8 +43,8 @@ service cloud.firestore {
     }
 
     match /resources/{resourceId} {
-      // Allow a user to read a resource if they are an admin, in the same department, or the author.
-      allow read: if isAdmin() || (request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department || request.auth.uid == resource.data.authorId));
+      // Allow any authenticated user to read resources. Filtering is done client-side.
+      allow read: if request.auth != null;
 
       // For creating a new resource
       allow create: if isAdmin() || (
