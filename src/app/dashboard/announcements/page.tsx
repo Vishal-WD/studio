@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreateAnnouncementDialog } from '@/components/dashboard/create-announcement-dialog';
@@ -14,44 +14,39 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function AnnouncementsPage() {
   const { userData, loading: authLoading } = useAuth();
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [allAnnouncements, setAllAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (authLoading || !userData) {
-      if (!authLoading) setLoadingAnnouncements(false);
-      return;
-    };
-
+    if (authLoading) return;
+    
     setLoadingAnnouncements(true);
 
-    if (userData.department) {
-      const announcementsQuery = query(
-        collection(db, 'announcements'), 
-        where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
-        const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
-        setAnnouncements(announcementsData);
-        setLoadingAnnouncements(false);
-      }, (error) => {
-        console.error("Error fetching announcements:", error);
-        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch announcements. This might require a composite index in Firestore. Please check the browser console for a link to create it."})
-        setLoadingAnnouncements(false);
-      });
-      
-      return () => unsubscribe();
-    } else {
-      setAnnouncements([]);
+    const announcementsQuery = query(
+      collection(db, 'announcements'), 
+      orderBy('createdAt', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
+      const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
+      setAllAnnouncements(announcementsData);
       setLoadingAnnouncements(false);
-    }
+    }, (error) => {
+      console.error("Error fetching announcements:", error);
+      toast({ variant: 'destructive', title: "Error", description: "Could not fetch announcements."})
+      setLoadingAnnouncements(false);
+    });
+    
+    return () => unsubscribe();
+  }, [authLoading, toast]);
 
-  }, [userData, authLoading, toast]);
+  const announcements = useMemo(() => {
+    if (!userData?.department) return [];
+    return allAnnouncements.filter(announcement => announcement.authorDepartment === userData.department);
+  }, [allAnnouncements, userData]);
 
   const handleImageClick = (imageUrl: string) => {
     setFocusedImage(imageUrl);

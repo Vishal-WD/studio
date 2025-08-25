@@ -45,7 +45,6 @@ export function LatestAnnouncementsFeed() {
   const announcements = useMemo(() => {
     if (!userData) return [];
     return allRecentAnnouncements.filter(announcement => {
-        // HOD/Dean see all announcements in their department, everyone else sees their department only
         return announcement.authorDepartment === userData.department;
     }).slice(0, 3); // Limit to 3 for the feed
   }, [allRecentAnnouncements, userData]);
