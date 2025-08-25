@@ -109,9 +109,9 @@ export function CreateAnnouncementDialog() {
         authorId: user.uid,
         authorName: userData.username,
         authorDesignation: userData.designation || null,
+        authorDepartment: userData.department,
         content: content,
         createdAt: serverTimestamp(),
-        authorDepartment: userData.department || "",
       };
 
       if (attachment) {
