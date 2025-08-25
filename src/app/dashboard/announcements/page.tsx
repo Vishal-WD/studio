@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreateAnnouncementDialog } from '@/components/dashboard/create-announcement-dialog';
@@ -31,17 +31,17 @@ export default function AnnouncementsPage() {
     if (userData.department) {
       const announcementsQuery = query(
         collection(db, 'announcements'), 
-        where('authorDepartment', '==', userData.department)
+        where('authorDepartment', '==', userData.department),
+        orderBy('createdAt', 'desc')
       );
       
       const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
-        const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement))
-            .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)); // Manual sort
+        const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
         setAnnouncements(announcementsData);
         setLoadingAnnouncements(false);
       }, (error) => {
         console.error("Error fetching announcements:", error);
-        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch announcements. You may need to have an index created in Firestore."})
+        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch announcements. This might require a composite index in Firestore. Please check the browser console for a link to create it."})
         setLoadingAnnouncements(false);
       });
       

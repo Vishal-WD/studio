@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, where, orderBy, limit } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnnouncementItem, type Announcement } from './announcement-item';
@@ -16,45 +16,40 @@ import { ImageFocusDialog } from './image-focus-dialog';
 
 export function LatestAnnouncementsFeed() {
   const { userData, loading: authLoading } = useAuth();
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [allRecentAnnouncements, setAllRecentAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (authLoading || !userData) {
-      if(!authLoading) setLoading(false);
-      return;
-    }
     setLoading(true);
+    const announcementsQuery = query(
+      collection(db, 'announcements'),
+      orderBy('createdAt', 'desc'),
+      limit(10) // Fetch latest 10, we will filter on the client
+    );
 
-    if (userData.department) {
-      const announcementsQuery = query(
-        collection(db, 'announcements'),
-        where('authorDepartment', '==', userData.department),
-        orderBy('createdAt', 'desc'),
-        limit(3)
-      );
-
-      const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
-        const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
-        setAnnouncements(announcementsData);
-        setLoading(false);
-      }, (error) => {
-        console.error("Error fetching latest announcements:", error);
-        toast({ variant: 'destructive', title: "Permissions Error", description: "Could not fetch announcements. You may need to have an index created in Firestore."})
-        setLoading(false);
-      });
-  
-      return () => unsubscribe();
-
-    } else {
-      setAnnouncements([]);
+    const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
+      const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
+      setAllRecentAnnouncements(announcementsData);
       setLoading(false);
-    }
-    
-  }, [userData, authLoading, toast]);
+    }, (error) => {
+      console.error("Error fetching latest announcements:", error);
+      toast({ variant: 'destructive', title: "Error", description: "Could not fetch announcements." })
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
   
+  const announcements = useMemo(() => {
+    if (!userData) return [];
+    return allRecentAnnouncements.filter(announcement => {
+        // HOD/Dean see all announcements in their department, everyone else sees their department only
+        return announcement.authorDepartment === userData.department;
+    }).slice(0, 3); // Limit to 3 for the feed
+  }, [allRecentAnnouncements, userData]);
+
   const handleImageClick = (imageUrl: string) => {
     if (!imageUrl) return;
     setFocusedImage(imageUrl);
