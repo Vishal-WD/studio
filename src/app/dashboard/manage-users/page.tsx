@@ -8,11 +8,11 @@ import { ref, deleteObject } from 'firebase/storage';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Edit, Trash2, KeyRound, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Search, Edit, Trash2, KeyRound, ShieldCheck, MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DeleteUserDialog } from '@/components/dashboard/delete-user-dialog';
@@ -20,6 +20,7 @@ import { EditUserDialog } from '@/components/dashboard/edit-user-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { CreateUserDialog } from '@/components/dashboard/create-user-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 interface User {
@@ -264,10 +265,123 @@ export default function ManageUsersPage() {
   };
 
   const getDesignationDisplay = (user: User) => {
-    if (!user.designation) return 'N/A';
+    if (!user.designation) return null;
     let display = user.designation.replace('_', ' ');
-    return <span className="capitalize">{display}</span>;
+    return <p className="text-sm text-foreground capitalize">Designation: {display}</p>;
   }
+
+  const UserActions = ({ user }: { user: User }) => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => handleEditClick(user)}>
+                <Edit className="mr-2 h-4 w-4" /> Edit User
+            </DropdownMenuItem>
+             <DropdownMenuItem onSelect={() => handleEditClick(user)}>
+                <ShieldCheck className="mr-2 h-4 w-4" /> Change Role
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => handlePasswordReset(user.email)}>
+                <KeyRound className="mr-2 h-4 w-4" /> Send Password Reset
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => handleDeleteClick(user)} className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> Delete User
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const UserCard = ({ user }: { user: User }) => (
+    <Card className="border-primary border-2">
+        <CardHeader>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="text-lg">{user.username}</CardTitle>
+                    <CardDescription>{user.email}</CardDescription>
+                </div>
+                <UserActions user={user} />
+            </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+            <div className="flex items-center gap-2">
+                <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'} className="capitalize">{user.role}</Badge>
+                <p className="text-sm text-foreground">{user.department}</p>
+            </div>
+            {user.staffId && <p className="text-sm text-foreground">Staff ID: {user.staffId}</p>}
+            {user.regno && <p className="text-sm text-foreground">Reg. No: {user.regno}</p>}
+            {getDesignationDisplay(user)}
+        </CardContent>
+    </Card>
+  );
+
+  const UsersList = ({users, type}: {users: User[], type: 'staff' | 'student'}) => (
+     <>
+        {/* Mobile View */}
+        <div className="md:hidden space-y-4">
+            {users.length > 0 ? (
+                users.map((u) => <UserCard key={u.id} user={u} />)
+            ) : (
+                <p className="text-center text-foreground py-4">No {type} found.</p>
+            )}
+        </div>
+        
+        {/* Desktop View */}
+        <div className="hidden md:block">
+             <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        {type === 'staff' && <TableHead>Designation</TableHead>}
+                        <TableHead>Department</TableHead>
+                        <TableHead>{type === 'staff' ? 'Staff ID' : 'Registration No.'}</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {users.length > 0 ? (
+                    users.map((u) => (
+                        <TableRow key={u.id}>
+                        <TableCell className="font-medium">{u.username}</TableCell>
+                        <TableCell>{u.email}</TableCell>
+                        <TableCell>
+                            <Badge variant={u.role === 'admin' ? 'destructive' : 'secondary'} className="capitalize">{u.role}</Badge>
+                        </TableCell>
+                        {type === 'staff' && <TableCell className="capitalize">{u.designation?.replace('_', ' ') || 'N/A'}</TableCell>}
+                        <TableCell>{u.department}</TableCell>
+                        <TableCell>{u.staffId || u.regno}</TableCell>
+                        <TableCell className="text-right">
+                           <div className="flex items-center justify-end">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(u)} title="Edit User">
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
+                                    <KeyRound className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)} title="Delete User">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                           </div>
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={type === 'staff' ? 7 : 6} className="text-center">
+                        No {type} found.
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </div>
+     </>
+  )
+
 
   if (authLoading || (loading && users.length === 0)) {
     return (
@@ -327,57 +441,7 @@ export default function ManageUsersPage() {
                 <CardDescription>All faculty and admin users.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="overflow-x-auto">
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Designation</TableHead>
-                        <TableHead>Department</TableHead>
-                        <TableHead>Staff ID</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {staffUsers.length > 0 ? (
-                        staffUsers.map((u) => (
-                            <TableRow key={u.id}>
-                            <TableCell className="font-medium">{u.username}</TableCell>
-                            <TableCell>{u.email}</TableCell>
-                            <TableCell>
-                                <Badge variant={u.role === 'admin' ? 'destructive' : 'secondary'}>{u.role}</Badge>
-                            </TableCell>
-                            <TableCell>{getDesignationDisplay(u)}</TableCell>
-                            <TableCell>{u.department}</TableCell>
-                            <TableCell>{u.staffId}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Edit User">
-                                <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Change Role">
-                                <ShieldCheck className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
-                                <KeyRound className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)} title="Delete User">
-                                <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
-                            </TableRow>
-                        ))
-                        ) : (
-                        <TableRow>
-                            <TableCell colSpan={7} className="text-center">
-                            No staff members found.
-                            </TableCell>
-                        </TableRow>
-                        )}
-                    </TableBody>
-                    </Table>
-                </div>
+                    <UsersList users={staffUsers} type="staff" />
                 </CardContent>
         </TabsContent>
         <TabsContent value="students" className="mt-0">
@@ -386,51 +450,7 @@ export default function ManageUsersPage() {
                 <CardDescription>All student users.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="overflow-x-auto">
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Department</TableHead>
-                        <TableHead>Registration No.</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {studentUsers.length > 0 ? (
-                        studentUsers.map((u) => (
-                            <TableRow key={u.id}>
-                            <TableCell className="font-medium">{u.username}</TableCell>
-                            <TableCell>{u.email}</TableCell>
-                            <TableCell>{u.department}</TableCell>
-                            <TableCell>{u.regno}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Edit User">
-                                <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handleEditClick(u)} title="Change Role">
-                                <ShieldCheck className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="mr-2" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
-                                <KeyRound className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)} title="Delete User">
-                                <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
-                            </TableRow>
-                        ))
-                        ) : (
-                        <TableRow>
-                            <TableCell colSpan={5} className="text-center">
-                            No students found.
-                            </TableCell>
-                        </TableRow>
-                        )}
-                    </TableBody>
-                    </Table>
-                </div>
+                    <UsersList users={studentUsers} type="student" />
                 </CardContent>
         </TabsContent>
       </Tabs>
@@ -462,7 +482,3 @@ export default function ManageUsersPage() {
     </>
   );
 }
-
-    
-
-    
