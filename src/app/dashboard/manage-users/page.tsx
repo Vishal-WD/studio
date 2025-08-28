@@ -145,7 +145,7 @@ export default function ManageUsersPage() {
             updatePayload.authorName = updatedData.username;
         }
 
-        // Update Announcements
+        // Update Notices
         const announcementsQuery = query(collection(db, 'announcements'), where('authorId', '==', selectedUser.uid));
         const announcementsSnapshot = await getDocs(announcementsQuery);
         announcementsSnapshot.forEach(announcementDoc => {
@@ -214,7 +214,7 @@ export default function ManageUsersPage() {
             }
         };
 
-        // Delete user's announcements and associated files
+        // Delete user's notices and associated files
         const announcementsQuery = query(collection(db, 'announcements'), where('authorId', '==', uid));
         const announcementsSnapshot = await getDocs(announcementsQuery);
         for (const announcementDoc of announcementsSnapshot.docs) {

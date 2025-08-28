@@ -14,14 +14,14 @@ import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirma
 import { useToast } from '@/hooks/use-toast';
 import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
 import Link from 'next/link';
-import { AnnouncementItem, type Announcement as AnnouncementType } from '@/components/dashboard/announcement-item';
+import { NoticeItem, type Notice as NoticeType } from '@/components/dashboard/announcement-item';
 import { type Event as EventType } from '@/components/dashboard/event-item';
 import type { Resource as ResourceType } from '@/app/dashboard/resources/page';
 
-type AnnouncementActivity = AnnouncementType & { type: 'announcement' };
+type NoticeActivity = NoticeType & { type: 'notice' };
 type EventActivity = EventType & { type: 'event' };
 type ResourceActivity = ResourceType & { type: 'resource' };
-type Activity = AnnouncementActivity | EventActivity | ResourceActivity;
+type Activity = NoticeActivity | EventActivity | ResourceActivity;
 
 const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, onDelete: (eventId: string) => void, onImageClick: (imageUrl: string) => void }) => {
     const formattedDate = event.createdAt ? formatDistanceToNow(new Date(event.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now';
@@ -101,7 +101,7 @@ export default function ActivityPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'announcement' | 'event' | 'resource'} | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'notice' | 'event' | 'resource'} | null>(null);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { toast } = useToast();
@@ -118,7 +118,7 @@ export default function ActivityPage() {
 
       const unsubscribers: (() => void)[] = [];
 
-      const handleSnapshot = (snapshot: any, type: 'announcement' | 'event' | 'resource') => {
+      const handleSnapshot = (snapshot: any, type: 'notice' | 'event' | 'resource') => {
         const data = snapshot.docs.map((doc: any) => ({ id: doc.id, type, ...doc.data() }));
         setActivities(prev => {
             const otherActivities = prev.filter(a => a.type !== type);
@@ -128,7 +128,7 @@ export default function ActivityPage() {
         setLoading(false);
       }
 
-      unsubscribers.push(onSnapshot(announcementsQuery, (snap) => handleSnapshot(snap, 'announcement')));
+      unsubscribers.push(onSnapshot(announcementsQuery, (snap) => handleSnapshot(snap, 'notice')));
       unsubscribers.push(onSnapshot(eventsQuery, (snap) => handleSnapshot(snap, 'event')));
       unsubscribers.push(onSnapshot(resourcesQuery, (snap) => handleSnapshot(snap, 'resource')));
 
@@ -141,7 +141,7 @@ export default function ActivityPage() {
     }
   }, [user, userData, authLoading]);
   
-  const handleDeleteClick = (id: string, type: 'announcement' | 'event' | 'resource') => {
+  const handleDeleteClick = (id: string, type: 'notice' | 'event' | 'resource') => {
     setItemToDelete({ id, type });
     setDeleteDialogOpen(true);
   };
@@ -154,7 +154,7 @@ export default function ActivityPage() {
     if (!itemToDelete) return;
 
     const { id, type } = itemToDelete;
-    const collectionName = type === 'announcement' ? 'announcements' : type === 'event' ? 'events' : 'resources';
+    const collectionName = type === 'notice' ? 'announcements' : type === 'event' ? 'events' : 'resources';
 
     try {
         await deleteDoc(doc(db, collectionName, id));
@@ -185,13 +185,13 @@ export default function ActivityPage() {
           </>
         ) : activities.length > 0 ? (
           activities.map(activity => {
-            if (activity.type === 'announcement') {
+            if (activity.type === 'notice') {
                 return (
-                    <AnnouncementItem 
-                        key={`announcement-${activity.id}`} 
-                        announcement={activity} 
+                    <NoticeItem 
+                        key={`notice-${activity.id}`} 
+                        notice={activity} 
                         onImageClick={handleImageClick}
-                        onDelete={() => handleDeleteClick(activity.id, 'announcement')}
+                        onDelete={() => handleDeleteClick(activity.id, 'notice')}
                     />
                 )
             }
@@ -207,7 +207,7 @@ export default function ActivityPage() {
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
               <div className="text-center text-foreground">
-                <p>You haven't created any announcements, events, or resources yet.</p>
+                <p>You haven't created any notices, events, or resources yet.</p>
               </div>
             </CardContent>
           </Card>

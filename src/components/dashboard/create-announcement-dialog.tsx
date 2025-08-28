@@ -89,17 +89,17 @@ export function CreateAnnouncementDialog() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!content.trim()) {
-      toast({ variant: "destructive", title: "Error", description: "Announcement content cannot be empty." });
+      toast({ variant: "destructive", title: "Error", description: "Notice content cannot be empty." });
       return;
     }
     if (!user || !userData) {
-      toast({ variant: "destructive", title: "Error", description: "You must be logged in to create an announcement." });
+      toast({ variant: "destructive", title: "Error", description: "You must be logged in to create a notice." });
       return;
     }
     
     const isAuthorized = userData.designation === 'dean' || userData.designation === 'hod';
     if (!isAuthorized) {
-        toast({ variant: "destructive", title: "Unauthorized", description: "You do not have permission to create announcements." });
+        toast({ variant: "destructive", title: "Unauthorized", description: "You do not have permission to create notices." });
         return;
     }
 
@@ -129,19 +129,19 @@ export function CreateAnnouncementDialog() {
       await addDoc(collection(db, "announcements"), announcementData);
 
       toast({
-        title: "Announcement created!",
-        description: "Your announcement has been successfully shared.",
+        title: "Notice created!",
+        description: "Your notice has been successfully shared.",
       });
       
       resetForm();
       setOpen(false); 
 
     } catch (error: any) {
-      console.error("Error creating announcement:", error);
+      console.error("Error creating notice:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Could not create announcement. Please try again.",
+        description: error.message || "Could not create notice. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -155,12 +155,12 @@ export function CreateAnnouncementDialog() {
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Create Announcement
+          Create Notice
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Create a new announcement</DialogTitle>
+          <DialogTitle className="font-headline">Create a new notice</DialogTitle>
           <DialogDescription>
             Share an update, event, or important information.
           </DialogDescription>

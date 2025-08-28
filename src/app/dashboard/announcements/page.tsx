@@ -9,12 +9,12 @@ import { CreateAnnouncementDialog } from '@/components/dashboard/create-announce
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageFocusDialog } from '@/components/dashboard/image-focus-dialog';
-import { AnnouncementItem, type Announcement } from '@/components/dashboard/announcement-item';
+import { NoticeItem, type Notice } from '@/components/dashboard/announcement-item';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AnnouncementsPage() {
   const { userData, loading: authLoading } = useAuth();
-  const [allAnnouncements, setAllAnnouncements] = useState<Announcement[]>([]);
+  const [allAnnouncements, setAllAnnouncements] = useState<Notice[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
@@ -31,12 +31,12 @@ export default function AnnouncementsPage() {
     );
     
     const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
-      const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
+      const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notice));
       setAllAnnouncements(announcementsData);
       setLoadingAnnouncements(false);
     }, (error) => {
-      console.error("Error fetching announcements:", error);
-      toast({ variant: 'destructive', title: "Error", description: "Could not fetch announcements."})
+      console.error("Error fetching notices:", error);
+      toast({ variant: 'destructive', title: "Error", description: "Could not fetch notices."})
       setLoadingAnnouncements(false);
     });
     
@@ -59,7 +59,7 @@ export default function AnnouncementsPage() {
     <div className="max-w-3xl mx-auto">
        <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-headline font-bold">Community Announcements</h1>
+          <h1 className="text-3xl font-headline font-bold">Community Notices</h1>
         </div>
         {authLoading ? (
             <Skeleton className="h-10 w-44" />
@@ -76,12 +76,12 @@ export default function AnnouncementsPage() {
             <Skeleton className="h-48 w-full" />
           </>
         ) : announcements.length > 0 ? (
-          announcements.map(announcement => <AnnouncementItem key={announcement.id} announcement={announcement} onImageClick={handleImageClick} />)
+          announcements.map(announcement => <NoticeItem key={announcement.id} notice={announcement} onImageClick={handleImageClick} />)
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
               <div className="text-center text-foreground">
-                <p>No announcements found for you yet.</p>
+                <p>No notices found for you yet.</p>
                  <p className="text-sm">If you are a HOD or Dean, try creating one!</p>
               </div>
             </CardContent>

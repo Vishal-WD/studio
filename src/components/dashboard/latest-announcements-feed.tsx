@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnnouncementItem, type Announcement } from './announcement-item';
+import { NoticeItem, type Notice } from './announcement-item';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ import { ImageFocusDialog } from './image-focus-dialog';
 
 export function LatestAnnouncementsFeed() {
   const { userData, loading: authLoading } = useAuth();
-  const [allRecentAnnouncements, setAllRecentAnnouncements] = useState<Announcement[]>([]);
+  const [allRecentAnnouncements, setAllRecentAnnouncements] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [focusedImage, setFocusedImage] = useState<string | null>(null);
   const { toast } = useToast();
@@ -30,12 +30,12 @@ export function LatestAnnouncementsFeed() {
     );
 
     const unsubscribe = onSnapshot(announcementsQuery, (querySnapshot) => {
-      const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Announcement));
+      const announcementsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notice));
       setAllRecentAnnouncements(announcementsData);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching latest announcements:", error);
-      toast({ variant: 'destructive', title: "Error", description: "Could not fetch announcements." })
+      console.error("Error fetching latest notices:", error);
+      toast({ variant: 'destructive', title: "Error", description: "Could not fetch notices." })
       setLoading(false);
     });
 
@@ -58,7 +58,7 @@ export function LatestAnnouncementsFeed() {
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-            <h2 className="font-headline text-2xl font-semibold">Latest Announcements</h2>
+            <h2 className="font-headline text-2xl font-semibold">Latest Notices</h2>
             <Button asChild variant="link">
             <Link href="/dashboard/announcements">
                 View All <ArrowRight className="ml-2" />
@@ -71,12 +71,12 @@ export function LatestAnnouncementsFeed() {
             </div>
         ) : announcements.length > 0 ? (
           <div className="space-y-4">
-            {announcements.map(announcement => <AnnouncementItem key={announcement.id} announcement={announcement} onImageClick={handleImageClick} />)}
+            {announcements.map(announcement => <NoticeItem key={announcement.id} notice={announcement} onImageClick={handleImageClick} />)}
           </div>
         ) : (
           <Card className="border-2 border-primary">
             <CardContent className="py-12">
-              <p className="text-center text-foreground">No recent announcements found for you.</p>
+              <p className="text-center text-foreground">No recent notices found for you.</p>
             </CardContent>
           </Card>
         )}
