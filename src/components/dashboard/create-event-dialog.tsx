@@ -206,7 +206,6 @@ export function CreateEventDialog() {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Annual Tech Symposium"
                 disabled={isSubmitting}
               />
             </div>
@@ -214,7 +213,6 @@ export function CreateEventDialog() {
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="description">Description</Label>
               <Textarea
-                placeholder="Tell us more about the event..."
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -230,7 +228,6 @@ export function CreateEventDialog() {
                         id="location"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        placeholder="e.g., Main Auditorium"
                         disabled={isSubmitting}
                     />
                 </div>
@@ -268,7 +265,6 @@ export function CreateEventDialog() {
                 id="registrationLink"
                 value={registrationLink}
                 onChange={(e) => setRegistrationLink(e.target.value)}
-                placeholder="https://forms.gle/..."
                 disabled={isSubmitting}
               />
             </div>

@@ -309,7 +309,6 @@ export default function ManageUsersPage() {
        <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
             <Input 
-              placeholder="Search by name, email, ID, or department..." 
               className="pl-9 w-full md:w-1/2 border-primary focus-visible:ring-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

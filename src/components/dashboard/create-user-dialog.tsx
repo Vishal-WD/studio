@@ -176,7 +176,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                 <FormItem>
                                 <FormLabel>Username</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="John Doe" {...field} />
+                                    <Input {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -211,7 +211,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                 <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="user@klu.ac.in" {...field} />
+                                    <Input {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -225,7 +225,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                 <FormLabel>Password</FormLabel>
                                 <div className="relative">
                                     <FormControl>
-                                    <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                                    <Input type={showPassword ? "text" : "password"} {...field} />
                                     </FormControl>
                                     <button
                                         type="button"
@@ -269,7 +269,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                             <FormItem>
                                 <FormLabel>Registration No.</FormLabel>
                                 <FormControl>
-                                <Input placeholder="21000..." {...field} />
+                                <Input {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -285,7 +285,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                 <FormItem>
                                 <FormLabel>Staff ID</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="S123..." {...field} />
+                                    <Input {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

@@ -170,7 +170,6 @@ export function CreateAnnouncementDialog() {
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="content">Content</Label>
               <Textarea
-                placeholder="What's on your mind?"
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}

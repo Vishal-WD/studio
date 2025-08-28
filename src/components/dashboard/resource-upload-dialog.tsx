@@ -199,7 +199,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
                     <FormItem>
                         <Label>File Name</Label>
                         <FormControl>
-                            <Input placeholder="e.g., Spring 2024 Calendar" {...field} disabled={isSubmitting} />
+                            <Input {...field} disabled={isSubmitting} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>

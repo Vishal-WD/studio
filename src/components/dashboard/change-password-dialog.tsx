@@ -110,7 +110,7 @@ export function ChangePasswordDialog({ isOpen, onOpenChange }: ChangePasswordDia
                   <FormLabel>New Password</FormLabel>
                    <div className="relative">
                     <FormControl>
-                      <Input type={showNewPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                      <Input type={showNewPassword ? "text" : "password"} {...field} />
                     </FormControl>
                     <button
                       type="button"
@@ -132,7 +132,7 @@ export function ChangePasswordDialog({ isOpen, onOpenChange }: ChangePasswordDia
                   <FormLabel>Confirm New Password</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                      <Input type={showConfirmPassword ? "text" : "password"} {...field} />
                     </FormControl>
                     <button
                       type="button"

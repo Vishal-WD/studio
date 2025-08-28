@@ -103,7 +103,7 @@ export function QuickLinkDialog({ isOpen, onOpenChange, existingLink }: QuickLin
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., SIS Login" {...field} disabled={isSubmitting} />
+                    <Input {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,7 +116,7 @@ export function QuickLinkDialog({ isOpen, onOpenChange, existingLink }: QuickLin
                 <FormItem>
                   <FormLabel>URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com" {...field} disabled={isSubmitting} />
+                    <Input {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

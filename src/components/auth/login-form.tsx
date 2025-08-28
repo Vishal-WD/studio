@@ -75,7 +75,7 @@ export function LoginForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@klu.ac.in" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -89,7 +89,7 @@ export function LoginForm() {
                   <FormLabel>Password</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
+                      <Input type={showPassword ? "text" : "password"} {...field} />
                     </FormControl>
                     <button
                       type="button"
