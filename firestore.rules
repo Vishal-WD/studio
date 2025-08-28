@@ -1,74 +1,72 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Check if the requesting user is an admin
+
+    // Helper function to check if a user is an admin
     function isAdmin() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    function isFaculty() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty';
+    // Helper function to check if user is a faculty member or admin
+    function isFacultyOrAdmin() {
+        let userRole = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+        return userRole == 'faculty' || userRole == 'admin';
     }
 
+    // Helper function to check if user has a specific designation (hod, dean)
+    function hasDesignation(designation) {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation == designation;
+    }
+    
+    // Helper function to check if a user is the author of a resource
+    function isAuthor(resource) {
+        return request.auth.uid == resource.data.authorId;
+    }
+
+    // Users Collection
     match /users/{userId} {
-      // Admins can list all users.
-      allow list: if isAdmin();
-
-      // An admin can perform any action on any user. A regular user can only affect their own document.
-      allow read, update, delete: if isAdmin() || request.auth.uid == userId;
-      
-      // An admin can create a user document.
-      allow create: if isAdmin();
+      // Admins can read, create, and update any user document.
+      // Users can only read their own document.
+      allow read, create, update: if isAdmin() || request.auth.uid == userId;
+      // Admins can delete any user (except themselves to be safe).
+      allow delete: if isAdmin() && request.auth.uid != userId;
     }
     
-    match /announcements/{announcementId} {
-      allow read: if request.auth != null;
-      
-      // For creating a new announcement
-      allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']);
-
-      // For updating or deleting an existing announcement
-      allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
-    }
-    
+    // Events Collection
     match /events/{eventId} {
-      allow read: if request.auth != null;
-      
-      // Admins or faculty can create events. Author must match requesting user.
-      allow create: if (isAdmin() || isFaculty()) && request.auth.uid == request.resource.data.authorId;
-
-      // Admins or the original author can update or delete events.
-      allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
+        // Any authenticated user can read events.
+        allow read: if request.auth.uid != null;
+        // Only faculty or admins can create events.
+        allow create: if isFacultyOrAdmin();
+        // Only the original author or an admin can update/delete an event.
+        allow update, delete: if isAdmin() || (isFacultyOrAdmin() && isAuthor(resource));
     }
-
+    
+    // Announcements Collection
+    match /announcements/{announcementId} {
+        // Any authenticated user can read announcements.
+        allow read: if request.auth.uid != null;
+        // Only HODs or Deans can create announcements.
+        allow create: if hasDesignation('hod') || hasDesignation('dean');
+        // Only the original author or an admin can update/delete.
+        allow update, delete: if isAdmin() || isAuthor(resource);
+    }
+    
+    // Resources Collection
     match /resources/{resourceId} {
-      // Allow any authenticated user to read resources. Filtering is done on the client.
-      allow read: if request.auth != null;
-
-      // For creating a new resource
-      allow create: if isAdmin() || (
-        request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
-        // Check against the data being sent in the request
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == request.resource.data.department
-      );
-
-      // For updating or deleting an existing resource
-      allow update, delete: if isAdmin() || (
-        request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']
-        // Check against the data already in the database
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department
-      );
+        // Any authenticated user can read resources.
+        allow read: if request.auth.uid != null;
+        // Only HODs or Deans can create/update/delete resources.
+        allow create, update, delete: if hasDesignation('hod') || hasDesignation('dean');
     }
 
+    // QuickLinks Collection
     match /quicklinks/{linkId} {
-      // Allow any authenticated user to read links.
-      allow read: if request.auth != null;
-
-      // Only admins can create, update, or delete links.
-      allow write: if isAdmin();
+        // Any authenticated user can read quick links.
+        allow read: if request.auth.uid != null;
+        // Only admins can create, update, or delete quick links.
+        allow create, update, delete: if isAdmin();
     }
   }
 }
