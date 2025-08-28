@@ -163,9 +163,6 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Resource' : 'Upload a New Resource'}</DialogTitle>
-          <DialogDescription>
-            {isEditing ? 'Update the resource type or replace the file.' : 'Select a file and choose its type to upload.'}
-          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

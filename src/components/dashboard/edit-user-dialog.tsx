@@ -114,9 +114,6 @@ export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserD
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit User: {user.username}</DialogTitle>
-          <DialogDescription>
-            Modify the details for this user. Email cannot be changed.
-          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

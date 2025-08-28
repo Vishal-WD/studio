@@ -193,9 +193,6 @@ export function CreateEventDialog() {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-headline">Create a new event</DialogTitle>
-          <DialogDescription>
-            Fill in the details to schedule a new campus event.
-          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">

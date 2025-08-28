@@ -412,7 +412,6 @@ export default function ManageUsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
-          <p className="text-foreground">View and manage all users in the system.</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <PlusCircle className="mr-2" />
@@ -438,7 +437,6 @@ export default function ManageUsersPage() {
         <TabsContent value="staff" className="mt-0">
                 <CardHeader>
                 <CardTitle>Staff</CardTitle>
-                <CardDescription>All faculty and admin users.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <UsersList users={staffUsers} type="staff" />
@@ -447,7 +445,6 @@ export default function ManageUsersPage() {
         <TabsContent value="students" className="mt-0">
                 <CardHeader>
                 <CardTitle>Students</CardTitle>
-                <CardDescription>All student users.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <UsersList users={studentUsers} type="student" />

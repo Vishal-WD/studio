@@ -235,14 +235,12 @@ export default function ResourcesPage() {
     <div className="max-w-4xl mx-auto space-y-8">
         <div>
             <h1 className="text-3xl font-headline font-bold">Resources</h1>
-            <p className="text-foreground">Find important documents and quick links.</p>
         </div>
 
         <Card className="border-2 border-primary">
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-lg">Quick Links</CardTitle>
-                    <CardDescription>Frequently used external links.</CardDescription>
                 </div>
                 {isAdmin && (
                     <Button variant="outline" size="sm" onClick={handleAddQuickLinkClick}>
@@ -285,7 +283,6 @@ export default function ResourcesPage() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-lg">Department Resources</CardTitle>
-                    <CardDescription>Documents specific to your department.</CardDescription>
                 </div>
                  {canManage && (
                     <Button onClick={handleAddResourceClick}>
@@ -356,4 +353,3 @@ export default function ResourcesPage() {
     </>
   );
 }
-

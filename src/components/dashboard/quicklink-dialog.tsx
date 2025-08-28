@@ -90,9 +90,6 @@ export function QuickLinkDialog({ isOpen, onOpenChange, existingLink }: QuickLin
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Quick Link' : 'Add a New Quick Link'}</DialogTitle>
-          <DialogDescription>
-            {isEditing ? 'Update the details for this link.' : 'Add a new link to the Quick Links section.'}
-          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

@@ -161,9 +161,6 @@ export function CreateAnnouncementDialog() {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-headline">Create a new notice</DialogTitle>
-          <DialogDescription>
-            Share an update, event, or important information.
-          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
