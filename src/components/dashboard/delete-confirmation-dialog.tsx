@@ -14,7 +14,7 @@ interface DeleteConfirmationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
-  itemType?: 'notice' | 'event' | 'user' | 'resource';
+  itemType?: 'notice' | 'event' | 'user' | 'resource' | 'link';
   itemName?: string;
 }
 

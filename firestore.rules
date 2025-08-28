@@ -25,10 +25,10 @@ service cloud.firestore {
     match /announcements/{announcementId} {
       allow read: if request.auth != null;
       
-      // For creating a new post
+      // For creating a new announcement
       allow create: if isAdmin() || (request.auth.uid == request.resource.data.authorId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.designation in ['dean', 'hod']);
 
-      // For updating or deleting an existing post
+      // For updating or deleting an existing announcement
       allow update, delete: if isAdmin() || (request.auth.uid == resource.data.authorId);
     }
     
@@ -43,7 +43,7 @@ service cloud.firestore {
     }
 
     match /resources/{resourceId} {
-      // Allow any authenticated user to read resources. Filtering is done client-side.
+      // Allow any authenticated user to read resources. Filtering is done on the client.
       allow read: if request.auth != null;
 
       // For creating a new resource
@@ -61,6 +61,14 @@ service cloud.firestore {
         // Check against the data already in the database
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department == resource.data.department
       );
+    }
+
+    match /quicklinks/{linkId} {
+      // Allow any authenticated user to read links.
+      allow read: if request.auth != null;
+
+      // Only admins can create, update, or delete links.
+      allow write: if isAdmin();
     }
   }
 }

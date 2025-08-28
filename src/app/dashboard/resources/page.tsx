@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirmation-dialog';
 import Link from 'next/link';
+import { QuickLinkDialog } from '@/components/dashboard/quicklink-dialog';
 
 export type ResourceType = 'academic_calendar' | 'exam_schedule';
 
@@ -30,6 +31,13 @@ export interface Resource {
     seconds: number;
     nanoseconds: number;
   };
+}
+
+export interface QuickLink {
+    id: string;
+    title: string;
+    url: string;
+    order: number;
 }
 
 const ResourceList = ({ 
@@ -102,39 +110,56 @@ const ResourceList = ({
 
 
 export default function ResourcesPage() {
-  const { userData, loading: authLoading } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const [allResources, setAllResources] = useState<Resource[]>([]);
+  const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // State for Resource Dialogs
   const [isUploadOpen, setUploadOpen] = useState(false);
-  const [isDeleteOpen, setDeleteOpen] = useState(false);
-  
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
+  const [isResourceDeleteOpen, setResourceDeleteOpen] = useState(false);
+
+  // State for QuickLink Dialogs
+  const [isQuickLinkOpen, setQuickLinkOpen] = useState(false);
+  const [editingQuickLink, setEditingQuickLink] = useState<QuickLink | null>(null);
+  const [deletingQuickLink, setDeletingQuickLink] = useState<QuickLink | null>(null);
+  const [isQuickLinkDeleteOpen, setQuickLinkDeleteOpen] = useState(false);
 
   const { toast } = useToast();
 
   useEffect(() => {
     if (authLoading) return;
-    
     setLoading(true);
 
-    const q = query(
-      collection(db, 'resources'), 
-      orderBy('createdAt', 'desc')
-    );
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const resourcesQuery = query(collection(db, 'resources'), orderBy('createdAt', 'desc'));
+    const quickLinksQuery = query(collection(db, 'quicklinks'), orderBy('order', 'asc'));
+
+    const unsubResources = onSnapshot(resourcesQuery, (querySnapshot) => {
       const resourcesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Resource));
       setAllResources(resourcesData);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching resources:", error);
-      toast({ variant: 'destructive', title: "Error", description: "Could not fetch resources."})
+      toast({ variant: 'destructive', title: "Error", description: "Could not fetch resources." });
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const unsubQuickLinks = onSnapshot(quickLinksQuery, (querySnapshot) => {
+      const linksData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuickLink));
+      setQuickLinks(linksData);
+    }, (error) => {
+      console.error("Error fetching quick links:", error);
+      toast({ variant: 'destructive', title: "Error", description: "Could not fetch quick links." });
+    });
+
+    return () => {
+      unsubResources();
+      unsubQuickLinks();
+    };
   }, [authLoading, toast]);
+
 
   const departmentResources = useMemo(() => {
     if (!userData?.department) return [];
@@ -145,24 +170,26 @@ export default function ResourcesPage() {
     return userData?.designation === 'hod' || userData?.designation === 'dean';
   }, [userData]);
   
-  const handleAddClick = () => {
+  const isAdmin = userData?.role === 'admin';
+
+  // Resource handlers
+  const handleAddResourceClick = () => {
     setEditingResource(null);
     setUploadOpen(true);
   };
   
-  const handleEditClick = (resource: Resource) => {
+  const handleEditResourceClick = (resource: Resource) => {
     setEditingResource(resource);
     setUploadOpen(true);
   };
   
-  const handleDeleteClick = (resource: Resource) => {
+  const handleDeleteResourceClick = (resource: Resource) => {
     setDeletingResource(resource);
-    setDeleteOpen(true);
+    setResourceDeleteOpen(true);
   };
   
-  const handleDeleteConfirm = async () => {
+  const handleDeleteResourceConfirm = async () => {
     if (!deletingResource) return;
-
     try {
         await deleteDoc(doc(db, 'resources', deletingResource.id));
         toast({ title: 'Success', description: 'Resource deleted successfully.' });
@@ -170,8 +197,38 @@ export default function ResourcesPage() {
         console.error("Error deleting resource:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Could not delete resource.' });
     } finally {
-        setDeleteOpen(false);
+        setResourceDeleteOpen(false);
         setDeletingResource(null);
+    }
+  };
+
+  // QuickLink handlers
+  const handleAddQuickLinkClick = () => {
+    setEditingQuickLink(null);
+    setQuickLinkOpen(true);
+  };
+
+  const handleEditQuickLinkClick = (link: QuickLink) => {
+    setEditingQuickLink(link);
+    setQuickLinkOpen(true);
+  };
+
+  const handleDeleteQuickLinkClick = (link: QuickLink) => {
+    setDeletingQuickLink(link);
+    setQuickLinkDeleteOpen(true);
+  };
+
+  const handleDeleteQuickLinkConfirm = async () => {
+    if (!deletingQuickLink) return;
+    try {
+        await deleteDoc(doc(db, 'quicklinks', deletingQuickLink.id));
+        toast({ title: 'Success', description: 'Quick Link deleted successfully.' });
+    } catch (error) {
+        console.error("Error deleting quick link:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete quick link.' });
+    } finally {
+        setQuickLinkDeleteOpen(false);
+        setDeletingQuickLink(null);
     }
   };
 
@@ -184,7 +241,7 @@ export default function ResourcesPage() {
           <h1 className="text-3xl font-headline font-bold">Resources</h1>
         </div>
         {canManage && (
-          <Button onClick={handleAddClick}>
+          <Button onClick={handleAddResourceClick}>
             <PlusCircle className="mr-2" />
             Add Resource
           </Button>
@@ -192,38 +249,45 @@ export default function ResourcesPage() {
       </div>
 
       <Card className="mb-6 border-2 border-primary">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Quick Links</CardTitle>
+            {isAdmin && (
+                <Button variant="outline" size="sm" onClick={handleAddQuickLinkClick}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Link
+                </Button>
+            )}
         </CardHeader>
         <CardContent>
            <div className="space-y-3">
-            <Link 
-                href="https://sis.kalasalingam.ac.in/login" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors border-2 border-primary"
-            >
-                <p className="font-medium">SIS LOGIN</p>
-                <ExternalLink className="h-5 w-5 text-foreground" />
-            </Link>
-             <Link 
-                href="https://lms.kalasalingam.ac.in/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors border-2 border-primary"
-            >
-                <p className="font-medium">KALVI LMS</p>
-                <ExternalLink className="h-5 w-5 text-foreground" />
-            </Link>
-             <Link 
-                href="https://kalvi.kalasalingam.ac.in/klustudentportal/students/loginManager/youLogin.jsp" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors border-2 border-primary"
-            >
-                <p className="font-medium">KALVI PORTAL</p>
-                <ExternalLink className="h-5 w-5 text-foreground" />
-            </Link>
+            {quickLinks.length > 0 ? quickLinks.map(link => (
+                <div key={link.id} className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors border-2 border-primary">
+                    <Link 
+                        href={link.url}
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex-grow"
+                    >
+                        <p className="font-medium">{link.title}</p>
+                    </Link>
+                    <div className="flex items-center">
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="mr-2">
+                             <ExternalLink className="h-5 w-5 text-foreground" />
+                        </a>
+                        {isAdmin && (
+                            <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditQuickLinkClick(link)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteQuickLinkClick(link)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )) : (
+                <p className="text-center text-foreground py-4">No quick links have been added yet.</p>
+            )}
            </div>
         </CardContent>
       </Card>
@@ -239,8 +303,8 @@ export default function ResourcesPage() {
                         resources={departmentResources} 
                         type="academic_calendar" 
                         canManage={canManage}
-                        onEdit={handleEditClick}
-                        onDelete={handleDeleteClick}
+                        onEdit={handleEditResourceClick}
+                        onDelete={handleDeleteResourceClick}
                     />
                 }
             </CardContent>
@@ -256,8 +320,8 @@ export default function ResourcesPage() {
                         resources={departmentResources} 
                         type="exam_schedule" 
                         canManage={canManage}
-                        onEdit={handleEditClick}
-                        onDelete={handleDeleteClick}
+                        onEdit={handleEditResourceClick}
+                        onDelete={handleDeleteResourceClick}
                     />
                 }
             </CardContent>
@@ -273,10 +337,24 @@ export default function ResourcesPage() {
     />
     
     <DeleteConfirmationDialog 
-        isOpen={isDeleteOpen}
-        onOpenChange={setDeleteOpen}
-        onConfirm={handleDeleteConfirm}
+        isOpen={isResourceDeleteOpen}
+        onOpenChange={setResourceDeleteOpen}
+        onConfirm={handleDeleteResourceConfirm}
         itemType="resource"
+    />
+
+    <QuickLinkDialog
+        isOpen={isQuickLinkOpen}
+        onOpenChange={setQuickLinkOpen}
+        existingLink={editingQuickLink}
+    />
+    
+    <DeleteConfirmationDialog 
+        isOpen={isQuickLinkDeleteOpen}
+        onOpenChange={setQuickLinkDeleteOpen}
+        onConfirm={handleDeleteQuickLinkConfirm}
+        itemType="link"
+        itemName={deletingQuickLink?.title}
     />
     </>
   );
