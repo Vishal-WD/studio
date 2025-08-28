@@ -15,6 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirmation-dialog';
 import Link from 'next/link';
 import { QuickLinkDialog } from '@/components/dashboard/quicklink-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export type ResourceType = 'academic_calendar' | 'exam_schedule';
 
@@ -59,20 +60,16 @@ const ResourceList = ({
 
   if (filteredResources.length === 0) {
     return (
-      <Card className="border-2 border-primary">
-        <CardContent className="py-12">
-          <div className="text-center text-foreground">
+        <div className="text-center text-foreground py-12">
             <p>No {typeName} documents have been uploaded yet.</p>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
     );
   }
 
   return (
     <div className="space-y-3">
       {filteredResources.map(resource => (
-        <Card key={resource.id} className="flex items-center justify-between p-4 border-2 border-primary">
+        <div key={resource.id} className="flex items-center justify-between p-4 border rounded-lg bg-background hover:bg-muted/50">
           <div>
             <a 
               href={resource.fileUrl} 
@@ -85,10 +82,10 @@ const ResourceList = ({
               {resource.createdAt ? `${formatDistanceToNow(new Date(resource.createdAt.seconds * 1000), { addSuffix: true })} by ${resource.authorName}` : `just now by ${resource.authorName}`}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-             <Button variant="outline" size="sm" asChild>
+          <div className="flex items-center gap-1 sm:gap-2">
+             <Button variant="ghost" size="icon" asChild className="h-9 w-9">
               <a href={resource.fileUrl} download={resource.fileName}>
-                <Download className="mr-2 h-4 w-4" /> Download
+                <Download className="h-4 w-4" />
               </a>
             </Button>
             {canManage && (
@@ -102,7 +99,7 @@ const ResourceList = ({
               </>
             )}
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );
@@ -235,99 +232,99 @@ export default function ResourcesPage() {
 
   return (
     <>
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-headline font-bold">Resources</h1>
+            <h1 className="text-3xl font-headline font-bold">Resources</h1>
+            <p className="text-foreground">Find important documents and quick links.</p>
         </div>
-        {canManage && (
-          <Button onClick={handleAddResourceClick}>
-            <PlusCircle className="mr-2" />
-            Add Resource
-          </Button>
-        )}
-      </div>
 
-      <Card className="mb-6 border-2 border-primary">
-        <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Quick Links</CardTitle>
-            {isAdmin && (
-                <Button variant="outline" size="sm" onClick={handleAddQuickLinkClick}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Link
-                </Button>
-            )}
-        </CardHeader>
-        <CardContent>
-           <div className="space-y-3">
-            {quickLinks.length > 0 ? quickLinks.map(link => (
-                <div key={link.id} className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors border-2 border-primary">
-                    <Link 
-                        href={link.url}
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="flex-grow"
-                    >
-                        <p className="font-medium">{link.title}</p>
-                    </Link>
-                    <div className="flex items-center">
-                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="mr-2">
-                             <ExternalLink className="h-5 w-5 text-foreground" />
-                        </a>
+        <Card className="border-2 border-primary">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="text-lg">Quick Links</CardTitle>
+                    <CardDescription>Frequently used external links.</CardDescription>
+                </div>
+                {isAdmin && (
+                    <Button variant="outline" size="sm" onClick={handleAddQuickLinkClick}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Link
+                    </Button>
+                )}
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-3">
+                {quickLinks.length > 0 ? quickLinks.map(link => (
+                    <div key={link.id} className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors border">
+                        <Link 
+                            href={link.url}
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="flex items-center gap-3 flex-grow"
+                        >
+                            <ExternalLink className="h-5 w-5 text-primary" />
+                            <p className="font-medium">{link.title}</p>
+                        </Link>
                         {isAdmin && (
-                            <>
+                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditQuickLinkClick(link)}>
                                     <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteQuickLinkClick(link)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
-                            </>
+                            </div>
                         )}
                     </div>
+                )) : (
+                    <p className="text-center text-foreground py-4">No quick links have been added yet.</p>
+                )}
                 </div>
-            )) : (
-                <p className="text-center text-foreground py-4">No quick links have been added yet.</p>
-            )}
-           </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+        </Card>
       
-      <div className="space-y-8">
         <Card className="border-2 border-primary">
-            <CardHeader>
-                <CardTitle className="font-headline text-xl">Academic Calendar</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="text-lg">Department Resources</CardTitle>
+                    <CardDescription>Documents specific to your department.</CardDescription>
+                </div>
+                 {canManage && (
+                    <Button onClick={handleAddResourceClick}>
+                        <PlusCircle className="mr-2" />
+                        Add Resource
+                    </Button>
+                )}
             </CardHeader>
             <CardContent>
-                {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
-                    <ResourceList 
-                        resources={departmentResources} 
-                        type="academic_calendar" 
-                        canManage={canManage}
-                        onEdit={handleEditResourceClick}
-                        onDelete={handleDeleteResourceClick}
-                    />
-                }
+                <Tabs defaultValue="academic_calendar">
+                    <TabsList className="grid w-full grid-cols-2 bg-muted">
+                        <TabsTrigger value="academic_calendar">Academic Calendar</TabsTrigger>
+                        <TabsTrigger value="exam_schedule">Exam Schedules</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="academic_calendar" className="pt-4">
+                        {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
+                            <ResourceList 
+                                resources={departmentResources} 
+                                type="academic_calendar" 
+                                canManage={canManage}
+                                onEdit={handleEditResourceClick}
+                                onDelete={handleDeleteResourceClick}
+                            />
+                        }
+                    </TabsContent>
+                    <TabsContent value="exam_schedule" className="pt-4">
+                        {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
+                            <ResourceList 
+                                resources={departmentResources} 
+                                type="exam_schedule" 
+                                canManage={canManage}
+                                onEdit={handleEditResourceClick}
+                                onDelete={handleDeleteResourceClick}
+                            />
+                        }
+                    </TabsContent>
+                </Tabs>
             </CardContent>
         </Card>
-
-        <Card className="border-2 border-primary">
-            <CardHeader>
-                <CardTitle className="font-headline text-xl">Exam Schedules</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {loading || authLoading ? <Skeleton className="h-24 w-full" /> : 
-                    <ResourceList 
-                        resources={departmentResources} 
-                        type="exam_schedule" 
-                        canManage={canManage}
-                        onEdit={handleEditResourceClick}
-                        onDelete={handleDeleteResourceClick}
-                    />
-                }
-            </CardContent>
-        </Card>
-      </div>
-
     </div>
 
     <ResourceUploadDialog 
@@ -359,3 +356,4 @@ export default function ResourcesPage() {
     </>
   );
 }
+
