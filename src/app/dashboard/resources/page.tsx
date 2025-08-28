@@ -288,8 +288,8 @@ export default function ResourcesPage() {
                 )}
             </CardHeader>
             <CardContent>
-                <Tabs defaultValue="academic_calendar">
-                    <TabsList className="grid w-full grid-cols-2 bg-muted">
+                <Tabs defaultValue="academic_calendar" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="academic_calendar">Academic Calendar</TabsTrigger>
                         <TabsTrigger value="exam_schedule">Exam Schedules</TabsTrigger>
                     </TabsList>
@@ -349,3 +349,5 @@ export default function ResourcesPage() {
     </>
   );
 }
+
+    
