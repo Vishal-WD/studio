@@ -51,7 +51,7 @@ export function LatestEventsFeed() {
         <h2 className="font-headline text-2xl font-semibold">Upcoming Events</h2>
         <Button asChild variant="link">
           <Link href="/dashboard/events">
-            View All <ArrowRight className="ml-2" />
+            View All <ArrowRight />
           </Link>
         </Button>
       </div>

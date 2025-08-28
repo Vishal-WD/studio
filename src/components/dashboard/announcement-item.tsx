@@ -106,7 +106,7 @@ export const NoticeItem = ({ notice, onImageClick, onDelete }: NoticeItemProps) 
                 <p className="text-xs text-foreground">{formattedDate}</p>
                 {onDelete && (
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:text-destructive" onClick={handleDeleteClick}>
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 />
                   </Button>
                 )}
             </div>
@@ -129,7 +129,7 @@ export const NoticeItem = ({ notice, onImageClick, onDelete }: NoticeItemProps) 
                         </p>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => handleDownload(e)}>
-                        <Download className="h-4 w-4" />
+                        <Download />
                     </Button>
                 </div>
             </div>

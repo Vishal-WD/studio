@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -22,7 +21,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Loader2, FileUp, X } from 'lucide-react';
-import type { Resource, ResourceType } from '@/app/dashboard/resources/page';
+import type { Resource } from '@/app/dashboard/resources/page';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 
 interface ResourceUploadDialogProps {
@@ -134,7 +133,6 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
         };
 
         if (attachment) {
-            // Only update file details if a new file is attached
             resourceData.fileUrl = attachment.dataUrl;
             resourceData.fileType = attachment.type;
         }
@@ -176,7 +174,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
                     <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
                         <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a resource type" />
+                                <SelectValue />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -222,7 +220,7 @@ export function ResourceUploadDialog({ isOpen, onOpenChange, existingResource }:
                     <div className="flex items-center justify-between p-2 text-sm border rounded-md">
                         <span className="truncate">{attachment.name}</span>
                         <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile} disabled={isSubmitting}>
-                            <X className="h-4 w-4" />
+                            <X />
                         </Button>
                     </div>
                 ) : (

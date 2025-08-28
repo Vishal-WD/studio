@@ -50,20 +50,20 @@ export const EventItem = ({ event }: { event: Event }) => {
         </CardContent>
         <CardFooter className="p-4 bg-muted/50 flex flex-col items-start gap-2">
             <div className="flex items-center text-sm text-foreground gap-2">
-            <Calendar className="h-4 w-4" />
+            <Calendar />
             <span>{format(new Date(event.date), "MMMM dd, yyyy")}</span>
             </div>
             <div className="flex items-center text-sm text-foreground gap-2">
-            <MapPin className="h-4 w-4" />
+            <MapPin />
             <span>{event.location}</span>
             </div>
             <div className="flex items-center text-sm text-foreground gap-2 pt-2">
-            <User className="h-4 w-4" />
+            <User />
             <span>Created by {event.authorName}</span>
             </div>
             <div className="w-full text-right mt-2">
                  <Button variant="link" className="p-0 h-auto text-primary">
-                    View Details <ArrowRight className="ml-1 h-4 w-4" />
+                    View Details <ArrowRight />
                 </Button>
             </div>
         </CardFooter>

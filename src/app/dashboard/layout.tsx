@@ -6,10 +6,8 @@ import {
   Calendar,
   Users,
   MessageSquare,
-  ShieldCheck,
   Activity,
   BookMarked,
-  UserPlus,
 } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import Link from 'next/link';
@@ -22,28 +20,27 @@ const BottomNavBar = () => {
   const pathname = usePathname();
   const { userData, loading } = useAuth();
 
-  // Don't render until we know the user's role to prevent hydration mismatch
   if (loading) {
     return (
         <div className="fixed bottom-0 left-0 z-50 w-full h-16 border-t border-border bg-muted">
-            <div className="grid h-full max-w-lg mx-auto grid-cols-5">
-                {/* You can add skeleton loaders here if you want */}
+            <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-full w-full" />)}
             </div>
         </div>
     );
   }
 
   const allMenuItems = [
-    { href: '/dashboard', icon: <LayoutDashboard />, label: 'Dashboard' },
-    { href: '/dashboard/events', icon: <Calendar />, label: 'Events' },
-    { href: '/dashboard/announcements', icon: <MessageSquare />, label: 'Notices' },
-    { href: '/dashboard/resources', icon: <BookMarked />, label: 'Resources' },
-    { href: '/dashboard/activity', icon: <Activity />, label: 'Activity' },
-    ...(userData?.role === 'admin' ? [{ href: '/dashboard/manage-users', icon: <Users />, label: 'Users' }] : []),
+    { href: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+    { href: '/dashboard/events', icon: <Calendar size={20} />, label: 'Events' },
+    { href: '/dashboard/announcements', icon: <MessageSquare size={20} />, label: 'Notices' },
+    { href: '/dashboard/resources', icon: <BookMarked size={20} />, label: 'Resources' },
+    { href: '/dashboard/activity', icon: <Activity size={20} />, label: 'Activity' },
+    ...(userData?.role === 'admin' ? [{ href: '/dashboard/manage-users', icon: <Users size={20} />, label: 'Users' }] : []),
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 z-50 w-full h-16 border-t border-border bg-primary">
+    <div className="fixed bottom-0 left-0 z-50 w-full h-16 border-t border-border bg-primary md:hidden">
       <div 
         className="grid h-full max-w-lg mx-auto font-medium"
         style={{ gridTemplateColumns: `repeat(${allMenuItems.length}, minmax(0, 1fr))` }}
@@ -62,7 +59,6 @@ const BottomNavBar = () => {
 const LoadingScreen = () => {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Skeleton for DashboardHeader */}
       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
         <Skeleton className="h-8 w-[320px]" />
         <div className="flex items-center gap-2 ml-auto">
@@ -70,12 +66,10 @@ const LoadingScreen = () => {
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </header>
-      {/* Skeleton for main content */}
-      <main className="flex-1 p-4 md:p-6 lg:p-8 mb-16">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 mb-16 md:mb-0">
         <Skeleton className="h-64 w-full" />
       </main>
-      {/* Skeleton for BottomNavBar */}
-      <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-muted border-t border-border">
+      <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-muted border-t border-border md:hidden">
           <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
               <Skeleton className="h-full w-full" />
               <Skeleton className="h-full w-full" />
@@ -108,13 +102,13 @@ export default function DashboardLayout({
   }
   
   if (!user) {
-    return null; // Don't render anything while redirecting
+    return null;
   }
 
   return (
     <div className="flex flex-col min-h-screen">
       <DashboardHeader />
-      <main className="flex-1 p-4 md:p-6 lg:p-8 mb-16">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 mb-16 md:mb-0">
         {children}
       </main>
       <BottomNavBar />

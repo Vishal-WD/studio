@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -91,7 +90,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean, onOpenCha
             </div>
             <DialogFooter>
               <Button onClick={() => setChangePasswordOpen(true)}>
-                  <KeyRound className="mr-2 h-4 w-4" />
+                  <KeyRound />
                   Change Password
               </Button>
             </DialogFooter>

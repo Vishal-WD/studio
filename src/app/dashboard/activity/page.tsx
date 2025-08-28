@@ -49,7 +49,7 @@ const EventItem = ({ event, onDelete, onImageClick }: { event: EventActivity, on
              <div className="flex items-center gap-2">
                 <p className="text-xs text-foreground">{formattedDate}</p>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:text-destructive" onClick={() => onDelete(event.id)}>
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 />
                 </Button>
             </div>
         </CardHeader>
@@ -78,11 +78,11 @@ const ResourceItem = ({ resource, onDelete }: { resource: ResourceActivity, onDe
                 <p className="text-xs text-foreground">{formattedDate}</p>
                  <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-foreground">
                     <a href={resource.fileUrl} download={resource.fileName}>
-                        <Download className="h-4 w-4" />
+                        <Download />
                     </a>
                 </Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:text-destructive" onClick={() => onDelete(resource.id)}>
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 />
                 </Button>
             </div>
         </CardHeader>
@@ -171,7 +171,7 @@ export default function ActivityPage() {
 
   return (
     <>
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-8">
       <div className="mb-6">
         <h1 className="text-3xl font-headline font-bold">My Activity</h1>
       </div>

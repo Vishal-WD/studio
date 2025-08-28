@@ -118,7 +118,7 @@ export default function EventDetailPage() {
   return (
     <div className="max-w-4xl mx-auto">
         <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-            <ArrowLeft className="mr-2" />
+            <ArrowLeft />
             Back to Events
         </Button>
       <div className="grid md:grid-cols-5 gap-8">
@@ -176,7 +176,7 @@ export default function EventDetailPage() {
                              <Button asChild variant="secondary" className="mt-1">
                                 <Link href={getFormattedLink(event.registrationLink)} target="_blank" rel="noopener noreferrer">
                                     Register Here
-                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                    <ArrowRight />
                                 </Link>
                             </Button>
                         </DetailItem>

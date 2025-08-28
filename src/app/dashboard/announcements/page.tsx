@@ -56,7 +56,7 @@ export default function AnnouncementsPage() {
 
   return (
     <>
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-8">
        <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Community Notices</h1>

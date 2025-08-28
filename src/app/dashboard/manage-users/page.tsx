@@ -140,13 +140,11 @@ export default function ManageUsersPage() {
         
         const batch = writeBatch(db);
 
-        // Common payload parts
         const updatePayload: any = {};
         if (updatedData.username) {
             updatePayload.authorName = updatedData.username;
         }
 
-        // Update Notices
         const announcementsQuery = query(collection(db, 'announcements'), where('authorId', '==', selectedUser.uid));
         const announcementsSnapshot = await getDocs(announcementsQuery);
         announcementsSnapshot.forEach(announcementDoc => {
@@ -158,7 +156,6 @@ export default function ManageUsersPage() {
             batch.update(announcementDoc.ref, announcementUpdatePayload);
         });
 
-        // Update Events
         const eventsQuery = query(collection(db, 'events'), where('authorId', '==', selectedUser.uid));
         const eventsSnapshot = await getDocs(eventsQuery);
         eventsSnapshot.forEach(eventDoc => {
@@ -167,7 +164,6 @@ export default function ManageUsersPage() {
             }
         });
 
-        // Update Resources
         const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', selectedUser.uid));
         const resourcesSnapshot = await getDocs(resourcesQuery);
         resourcesSnapshot.forEach(resourceDoc => {
@@ -183,7 +179,7 @@ export default function ManageUsersPage() {
 
         setEditDialogOpen(false);
         toast({ title: "Success", description: "User and all their content have been updated successfully." });
-        fetchUsers(); // Refresh the user list
+        fetchUsers();
     } catch (error) {
         console.error("Error updating user and their content:", error);
         toast({ variant: "destructive", title: "Error", description: "Could not update user." });
@@ -196,26 +192,21 @@ export default function ManageUsersPage() {
         const uid = selectedUser.uid;
         const batch = writeBatch(db);
 
-        // Function to delete a file from storage if it exists
         const deleteStorageFile = async (fileUrl: string | undefined) => {
             if (!fileUrl) return;
             try {
-                // For data URIs, there's nothing to delete in storage.
                 if (fileUrl.startsWith('data:')) {
                     return; 
                 }
-                // For gs:// or https:// URLs from Firebase Storage
                 const fileRef = ref(storage, fileUrl);
                 await deleteObject(fileRef);
             } catch (error: any) {
-                // Log and ignore errors for files that might already be deleted or don't exist.
                 if (error.code !== 'storage/object-not-found') {
                     console.error("Error deleting file from storage:", error);
                 }
             }
         };
 
-        // Delete user's notices and associated files
         const announcementsQuery = query(collection(db, 'announcements'), where('authorId', '==', uid));
         const announcementsSnapshot = await getDocs(announcementsQuery);
         for (const announcementDoc of announcementsSnapshot.docs) {
@@ -223,7 +214,6 @@ export default function ManageUsersPage() {
             batch.delete(announcementDoc.ref);
         }
 
-        // Delete user's events and associated images
         const eventsQuery = query(collection(db, 'events'), where('authorId', '==', uid));
         const eventsSnapshot = await getDocs(eventsQuery);
         for (const eventDoc of eventsSnapshot.docs) {
@@ -231,7 +221,6 @@ export default function ManageUsersPage() {
             batch.delete(eventDoc.ref);
         }
         
-        // Delete user's resources and associated files
         const resourcesQuery = query(collection(db, 'resources'), where('authorId', '==', uid));
         const resourcesSnapshot = await getDocs(resourcesQuery);
         for (const resourceDoc of resourcesSnapshot.docs) {
@@ -239,16 +228,10 @@ export default function ManageUsersPage() {
             batch.delete(resourceDoc.ref);
         }
 
-        // Delete the user document itself
         const userDocRef = doc(db, 'users', uid);
         batch.delete(userDocRef);
 
-        // Commit all Firestore deletions
         await batch.commit();
-
-        // Note: Deleting the user from Firebase Auth is a separate, more complex operation.
-        // It's a destructive action that requires backend logic (like a Cloud Function) to be done safely.
-        // This implementation only removes the user from the application database and their content.
 
         setDeleteDialogOpen(false);
         toast({ title: "Success", description: `User ${selectedUser.username} and their content have been deleted.` });
@@ -274,21 +257,21 @@ export default function ManageUsersPage() {
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical />
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => handleEditClick(user)}>
-                <Edit className="mr-2 h-4 w-4" /> Edit User
+                <Edit /> Edit User
             </DropdownMenuItem>
              <DropdownMenuItem onSelect={() => handleEditClick(user)}>
-                <ShieldCheck className="mr-2 h-4 w-4" /> Change Role
+                <ShieldCheck /> Change Role
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => handlePasswordReset(user.email)}>
-                <KeyRound className="mr-2 h-4 w-4" /> Send Password Reset
+                <KeyRound /> Send Password Reset
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => handleDeleteClick(user)} className="text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                <Trash2 /> Delete User
             </DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>
@@ -319,7 +302,6 @@ export default function ManageUsersPage() {
 
   const UsersList = ({users, type}: {users: User[], type: 'staff' | 'student'}) => (
      <>
-        {/* Mobile View */}
         <div className="md:hidden space-y-4">
             {users.length > 0 ? (
                 users.map((u) => <UserCard key={u.id} user={u} />)
@@ -328,7 +310,6 @@ export default function ManageUsersPage() {
             )}
         </div>
         
-        {/* Desktop View */}
         <div className="hidden md:block">
              <Table>
                 <TableHeader>
@@ -357,13 +338,13 @@ export default function ManageUsersPage() {
                         <TableCell className="text-right">
                            <div className="flex items-center justify-end">
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(u)} title="Edit User">
-                                    <Edit className="h-4 w-4" />
+                                    <Edit />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePasswordReset(u.email)} title="Send Password Reset">
-                                    <KeyRound className="h-4 w-4" />
+                                    <KeyRound />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteClick(u)} title="Delete User">
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 />
                                 </Button>
                            </div>
                         </TableCell>
@@ -385,9 +366,9 @@ export default function ManageUsersPage() {
 
   if (authLoading || (loading && users.length === 0)) {
     return (
-      <div className="p-4 md:p-6 lg:p-8">
-        <Skeleton className="h-12 w-1/4 mb-4" />
-        <Skeleton className="h-10 w-full mb-6" />
+      <div className="p-4 md:p-6 lg:p-8 space-y-8">
+        <Skeleton className="h-12 w-1/4" />
+        <Skeleton className="h-10 w-full" />
         <Card className="border-2 border-primary">
           <CardHeader>
              <Skeleton className="h-8 w-1/3" />
@@ -414,7 +395,7 @@ export default function ManageUsersPage() {
           <h1 className="text-3xl font-headline font-bold">Manage Users</h1>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
-          <PlusCircle className="mr-2" />
+          <PlusCircle />
           Create User
         </Button>
       </div>
@@ -430,25 +411,15 @@ export default function ManageUsersPage() {
 
     <Card className="shadow-md border-2 border-primary">
       <Tabs defaultValue="staff" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 border-2 border-primary rounded-md">
+        <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 border-b-2 border-primary rounded-none">
             <TabsTrigger value="staff">Staff</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
         <TabsContent value="staff" className="mt-0">
-                <CardHeader>
-                <CardTitle>Staff</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <UsersList users={staffUsers} type="staff" />
-                </CardContent>
+            <UsersList users={staffUsers} type="staff" />
         </TabsContent>
         <TabsContent value="students" className="mt-0">
-                <CardHeader>
-                <CardTitle>Students</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <UsersList users={studentUsers} type="student" />
-                </CardContent>
+            <UsersList users={studentUsers} type="student" />
         </TabsContent>
       </Tabs>
     </Card>

@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, query, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Download, Edit, Trash2, ExternalLink } from 'lucide-react';
@@ -85,16 +85,16 @@ const ResourceList = ({
           <div className="flex items-center gap-1 sm:gap-2">
              <Button variant="ghost" size="icon" asChild className="h-9 w-9">
               <a href={resource.fileUrl} download={resource.fileName}>
-                <Download className="h-4 w-4" />
+                <Download />
               </a>
             </Button>
             {canManage && (
               <>
                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => onEdit(resource)}>
-                  <Edit className="h-4 w-4" />
+                  <Edit />
                 </Button>
                 <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => onDelete(resource)}>
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 />
                 </Button>
               </>
             )}
@@ -112,13 +112,11 @@ export default function ResourcesPage() {
   const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // State for Resource Dialogs
   const [isUploadOpen, setUploadOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
   const [isResourceDeleteOpen, setResourceDeleteOpen] = useState(false);
 
-  // State for QuickLink Dialogs
   const [isQuickLinkOpen, setQuickLinkOpen] = useState(false);
   const [editingQuickLink, setEditingQuickLink] = useState<QuickLink | null>(null);
   const [deletingQuickLink, setDeletingQuickLink] = useState<QuickLink | null>(null);
@@ -169,7 +167,6 @@ export default function ResourcesPage() {
   
   const isAdmin = userData?.role === 'admin';
 
-  // Resource handlers
   const handleAddResourceClick = () => {
     setEditingResource(null);
     setUploadOpen(true);
@@ -199,7 +196,6 @@ export default function ResourcesPage() {
     }
   };
 
-  // QuickLink handlers
   const handleAddQuickLinkClick = () => {
     setEditingQuickLink(null);
     setQuickLinkOpen(true);
@@ -244,7 +240,7 @@ export default function ResourcesPage() {
                 </div>
                 {isAdmin && (
                     <Button variant="outline" size="sm" onClick={handleAddQuickLinkClick}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Link
+                        <PlusCircle /> Add Link
                     </Button>
                 )}
             </CardHeader>
@@ -264,10 +260,10 @@ export default function ResourcesPage() {
                         {isAdmin && (
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditQuickLinkClick(link)}>
-                                    <Edit className="h-4 w-4" />
+                                    <Edit />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteQuickLinkClick(link)}>
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 />
                                 </Button>
                             </div>
                         )}
@@ -286,7 +282,7 @@ export default function ResourcesPage() {
                 </div>
                  {canManage && (
                     <Button onClick={handleAddResourceClick}>
-                        <PlusCircle className="mr-2" />
+                        <PlusCircle />
                         Add Resource
                     </Button>
                 )}

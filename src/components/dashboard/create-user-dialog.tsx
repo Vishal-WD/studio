@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -131,7 +130,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
       onOpenChange(false);
       form.reset();
 
-    } catch (error: any) {
+    } catch (error: any) => {
       console.error("Error creating user:", error);
       let description = 'An unknown error occurred.';
       if (error.code === 'auth/email-already-in-use') {
@@ -191,7 +190,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a role" />
+                                        <SelectValue />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -232,7 +231,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground"
                                     >
-                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    {showPassword ? <EyeOff /> : <Eye />}
                                     </button>
                                 </div>
                                 <FormMessage />
@@ -248,7 +247,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select a department" />
+                                            <SelectValue />
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -300,7 +299,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onUserCreated }: Create
                                 <Select onValueChange={field.onChange} defaultValue={field.value || 'none'}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a designation" />
+                                        <SelectValue />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>

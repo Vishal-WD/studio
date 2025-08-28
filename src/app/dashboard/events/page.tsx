@@ -41,7 +41,7 @@ export default function EventsPage() {
   const canCreateEvent = userData?.role === 'admin' || userData?.role === 'faculty';
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto space-y-8">
        <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-headline font-bold">Campus Events</h1>

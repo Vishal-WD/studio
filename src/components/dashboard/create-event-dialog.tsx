@@ -8,14 +8,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Paperclip, X, Loader2, Calendar as CalendarIcon, Link2 } from "lucide-react";
+import { PlusCircle, Paperclip, X, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
@@ -59,7 +58,6 @@ export function CreateEventDialog() {
           const canvas = document.createElement("canvas");
           let { width, height } = img;
 
-          // Resize logic
           if (width > height) {
             if (width > MAX_IMAGE_DIMENSION) {
               height *= MAX_IMAGE_DIMENSION / width;
@@ -186,7 +184,7 @@ export function CreateEventDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <PlusCircle />
           Create Event
         </Button>
       </DialogTrigger>
@@ -240,7 +238,7 @@ export function CreateEventDialog() {
                             )}
                             disabled={isSubmitting}
                             >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            <CalendarIcon />
                             {date ? format(date, "PPP") : <span>Pick a date</span>}
                             </Button>
                         </PopoverTrigger>
@@ -284,7 +282,7 @@ export function CreateEventDialog() {
                     onClick={removeImage}
                     disabled={isSubmitting}
                 >
-                    <X className="h-4 w-4"/>
+                    <X />
                 </Button>
               </div>
             )}
@@ -305,7 +303,7 @@ export function CreateEventDialog() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isSubmitting}
               >
-                  <Paperclip className="mr-2 h-4 w-4" />
+                  <Paperclip />
                   Add Image
               </Button>
                <span>Max file size: 350KB</span>

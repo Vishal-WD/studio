@@ -61,7 +61,7 @@ export function LatestAnnouncementsFeed() {
             <h2 className="font-headline text-2xl font-semibold">Latest Notices</h2>
             <Button asChild variant="link">
             <Link href="/dashboard/announcements">
-                View All <ArrowRight className="ml-2" />
+                View All <ArrowRight />
             </Link>
             </Button>
         </div>

@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -154,7 +153,7 @@ export function CreateAnnouncementDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <PlusCircle />
           Create Notice
         </Button>
       </DialogTrigger>
@@ -185,7 +184,7 @@ export function CreateAnnouncementDialog() {
                     onClick={removeAttachment}
                     disabled={isSubmitting}
                 >
-                    <X className="h-4 w-4"/>
+                    <X />
                 </Button>
 
                 {isImage ? (
@@ -224,7 +223,7 @@ export function CreateAnnouncementDialog() {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isSubmitting}
                 >
-                    <Paperclip className="mr-2 h-4 w-4" />
+                    <Paperclip />
                     Attach File
                 </Button>
                 <span className="text-xs text-foreground">Max file size: 350KB</span>
